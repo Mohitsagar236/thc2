@@ -1,93 +1,215 @@
-const highlights = [
-  {
-    title: "Fast bootstrap",
-    description:
-      "Vite powers local development on port 3000 with a clean React + TypeScript baseline.",
-  },
-  {
-    title: "Design tokens",
-    description:
-      "Primary, blue.dark, and golden are exposed in Tailwind for consistent branding.",
-  },
-  {
-    title: "Guardrails",
-    description:
-      "ESLint, Prettier, Husky, and lint-staged are wired for repeatable code quality.",
-  },
-];
+import { useTheme } from "@/theme";
+import { ThemeSelector } from "@/components/ThemeSelector";
+import { ThemedCard } from "@/components/ThemedCard";
 
 function App() {
+  const { currentTheme, themes } = useTheme();
+
+  const features = [
+    {
+      title: "Theme System",
+      description:
+        "Runtime theme switching with CSS custom properties. No page reload required.",
+      status: "success" as const,
+    },
+    {
+      title: "Multiple Themes",
+      description: `Choose from ${themes.length} available themes: Light, Dark, Ocean, and Compact.`,
+      status: "info" as const,
+    },
+    {
+      title: "WCAG 2.2 AA",
+      description:
+        "All themes pass automated accessibility checks. 4.5:1 contrast ratio, 2px focus rings.",
+      status: "success" as const,
+    },
+    {
+      title: "Responsive Design",
+      description:
+        "Layout variants (sidebar, top-nav) and density modes (compact, comfortable).",
+      status: "info" as const,
+    },
+    {
+      title: "Local Storage Persistence",
+      description: "Theme selection saved and restored on page reload.",
+      status: "success" as const,
+    },
+    {
+      title: "OS Preference Detection",
+      description:
+        "Respects system prefers-color-scheme. Defaults to dark if OS prefers dark.",
+      status: "info" as const,
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(100,103,242,0.16),transparent_35%),linear-gradient(180deg,#ffffff_0%,#f7f8ff_100%)] text-blue-dark">
-      <section className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-16 sm:px-10 lg:px-12">
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-medium text-primary shadow-sm backdrop-blur">
-          <span className="h-2 w-2 rounded-full bg-golden" />
-          Disha frontend setup
-        </div>
-
-        <div className="mt-8 grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-semibold tracking-tight text-blue-dark sm:text-5xl lg:text-6xl">
-              A clean React foundation with Vite, Tailwind, and repo guardrails.
+    <main
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "var(--color-bg)",
+        color: "var(--color-text)",
+        padding: "var(--spacing-lg)",
+      }}
+    >
+      <section
+        style={{
+          maxWidth: "1280px",
+          margin: "0 auto",
+        }}
+      >
+        {/* Header with Theme Selector */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "var(--spacing-xl)",
+            paddingBottom: "var(--spacing-lg)",
+            borderBottom: "1px solid var(--color-border)",
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                margin: "0 0 var(--spacing-sm) 0",
+                fontSize: "var(--font-size-xl)",
+                fontWeight: "var(--font-weight-semibold)",
+              }}
+            >
+              Theme Configuration System
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-              This scaffold gives Disha a production-ready starting point with
-              aliases, linting, formatting, Husky hooks, and the requested brand
-              colors already in place.
+            <p
+              style={{
+                margin: 0,
+                color: "var(--color-text-muted)",
+                fontSize: "var(--font-size-sm)",
+              }}
+            >
+              Current theme: <strong>{currentTheme}</strong>
             </p>
-
-            <div className="mt-8 flex flex-wrap gap-4">
-              <a
-                className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90"
-                href="https://vite.dev/guide/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open Vite guide
-              </a>
-              <a
-                className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-blue-dark transition hover:border-primary hover:text-primary"
-                href="https://tailwindcss.com/docs/installation"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Tailwind setup
-              </a>
-            </div>
           </div>
-
-          <div className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-2xl shadow-slate-200/60 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  Project status
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-blue-dark">
-                  Ready to build
-                </p>
-              </div>
-              <div className="rounded-2xl bg-golden/15 px-4 py-2 text-sm font-semibold text-golden">
-                Tailwind v3
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {highlights.map((item) => (
-                <article
-                  key={item.title}
-                  className="rounded-2xl bg-slate-50 p-4"
-                >
-                  <h2 className="text-base font-semibold text-blue-dark">
-                    {item.title}
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {item.description}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
+          <ThemeSelector />
         </div>
+
+        {/* Features Grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "var(--spacing-lg)",
+            marginTop: "var(--spacing-xl)",
+          }}
+        >
+          {features.map((feature) => (
+            <ThemedCard
+              key={feature.title}
+              title={feature.title}
+              description={feature.description}
+              status={feature.status}
+            />
+          ))}
+        </div>
+
+        {/* Documentation Section */}
+        <div
+          style={{
+            marginTop: "var(--spacing-xl)",
+            padding: "var(--card-padding)",
+            backgroundColor: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "8px",
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 var(--spacing-md) 0",
+              fontSize: "var(--font-size-lg)",
+              fontWeight: "var(--font-weight-semibold)",
+            }}
+          >
+            How It Works
+          </h2>
+          <ul
+            style={{
+              margin: "0",
+              paddingLeft: "var(--spacing-lg)",
+              lineHeight: "var(--line-height-base)",
+            }}
+          >
+            <li style={{ marginBottom: "var(--spacing-sm)" }}>
+              <strong>Pipeline Flow:</strong> Designers update tokens → CI
+              validates accessibility → bundle compiled → deployed to CDN
+            </li>
+            <li style={{ marginBottom: "var(--spacing-sm)" }}>
+              <strong>Runtime Flow:</strong> Bundle loaded once → user selects
+              theme → CSS variables applied → all MFEs reflect change instantly
+            </li>
+            <li style={{ marginBottom: "var(--spacing-sm)" }}>
+              <strong>Storage:</strong> Selection persisted to localStorage,
+              cached bundle used as CDN fallback
+            </li>
+            <li>
+              <strong>Accessibility:</strong> Every theme tested against WCAG
+              2.2 AA criteria automatically
+            </li>
+          </ul>
+        </div>
+
+        {/* Integration Section */}
+        <div
+          style={{
+            marginTop: "var(--spacing-xl)",
+            padding: "var(--card-padding)",
+            backgroundColor: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "8px",
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 var(--spacing-md) 0",
+              fontSize: "var(--font-size-lg)",
+              fontWeight: "var(--font-weight-semibold)",
+            }}
+          >
+            MFE Integration
+          </h2>
+          <p style={{ margin: "var(--spacing-md) 0 0 0" }}>
+            All MFEs consuming this theme system must follow the integration
+            contract:
+          </p>
+          <ul
+            style={{
+              marginTop: "var(--spacing-md)",
+              paddingLeft: "var(--spacing-lg)",
+            }}
+          >
+            <li>
+              Use CSS custom properties exclusively (var() instead of hardcoded
+              values)
+            </li>
+            <li>Ship CSS for all layout variants and density classes</li>
+            <li>Never load the theme bundle independently</li>
+            <li>Listen for theme-changed custom event on window if needed</li>
+          </ul>
+        </div>
+
+        {/* Footer */}
+        <footer
+          style={{
+            marginTop: "var(--spacing-xl)",
+            paddingTop: "var(--spacing-lg)",
+            borderTop: "1px solid var(--color-border)",
+            color: "var(--color-text-muted)",
+            fontSize: "var(--font-size-sm)",
+            textAlign: "center",
+          }}
+        >
+          <p>
+            Theme catalogue version 1.0.0 • WCAG 2.2 AA compliant • All themes
+            support dark mode and multiple layout variants
+          </p>
+        </footer>
       </section>
     </main>
   );
