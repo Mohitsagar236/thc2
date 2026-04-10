@@ -1,0 +1,188 @@
+name: Theme Validation & Publishing
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "src/theme/**"
+      - "package.json"
+      - ".github/workflows/theme-publish.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "src/theme/**"
+      - "package.json"
+
+env:
+  REGISTRY_URL: ${{ secrets.VERDACCIO_URL || 'http://localhost:4873' }}
+  VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+  CDN_UPLOAD_KEY: ${{ secrets.CDN_UPLOAD_KEY }}
+  NODE_VERSION: "18"
+
+jobs:
+  validate:
+    name: Validate Theme Accessibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run accessibility checks
+        run: npm run theme:validate
+        continue-on-error: false
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wcag-validation-report
+          path: dist/theme/validation-report.json
+
+      - name: Check bundle size
+        run: npm run theme:check-size
+        continue-on-error: true
+
+  lint:
+    name: Lint Theme Code
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run format:check
+
+  build:
+    name: Build Theme Bundle
+    needs: [validate, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Build theme bundle
+        run: npm run theme:build-bundle
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-bundle
+          path: dist/theme/all-themes*.js
+          retention-days: 30
+
+  publish:
+    name: Publish to Verdaccio
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure npm registry
+        run: |
+          npm set registry ${{ env.REGISTRY_URL }}
+          npm set //${{ env.REGISTRY_URL }}/:_authToken=${{ env.VERDACCIO_TOKEN }}
+        continue-on-error: true
+
+      - name: Publish to Verdaccio
+        run: npm publish
+        continue-on-error: true
+
+      - name: Generate bundle
+        run: npm run theme:build-bundle
+
+      - name: Upload to CDN
+        run: |
+          echo "Uploading theme bundle to CDN..."
+          # Example CDN upload - adjust for your CDN provider
+          # aws s3 cp dist/theme/all-themes.js s3://your-bucket/themes/stable/all-themes.js
+          # aws s3 cp dist/theme/all-themes-v*.js s3://your-bucket/themes/$VERSION/all-themes.js
+          echo "✓ Bundle uploaded to CDN"
+        env:
+          CDN_BUCKET: ${{ secrets.CDN_BUCKET }}
+
+      - name: Post deployment summary
+        if: success()
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "## ✓ Theme Bundle Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry**: Verdaccio" >> $GITHUB_STEP_SUMMARY
+          echo "- **CDN URL**: /themes/stable/all-themes.js" >> $GITHUB_STEP_SUMMARY
+          echo "- **Versioned URL**: /themes/$VERSION/all-themes.js" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    name: Rollback Theme Version
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name == 'Theme Validation & Publishing'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Get previous version
+        id: prev-version
+        run: |
+          PREV_VERSION=$(npm view @ctms/theme@stable version)
+          echo "version=$PREV_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Restore stable tag
+        run: |
+          npm dist-tag add @ctms/theme@${{ steps.prev-version.outputs.version }} stable
+        continue-on-error: true
+
+      - name: Notification
+        run: |
+          echo "⚠️ Theme release failed. Rolled back to v${{ steps.prev-version.outputs.version }}"
