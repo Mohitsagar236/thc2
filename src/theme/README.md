@@ -1,6 +1,6 @@
 # Theme System — Complete Documentation
 
-This directory contains the complete theme configuration system for the Disha frontend. It covers:
+This directory contains the complete theme configuration system for the CTMS host application. It covers:
 
 - **Design tokens** — colors, typography, spacing, and layout
 - **Runtime theme switching** — instant, no-reload theme changes
@@ -56,6 +56,7 @@ src/theme/
 ├── types.ts                    # TypeScript types and interfaces
 ├── context.ts                  # React Context (in separate file to avoid Fast Refresh warning)
 ├── provider.tsx                # ThemeProvider component
+├── loader.ts                   # CDN/global/cache catalogue loader
 ├── hooks/
 │   └── useTheme.ts            # Custom hook for accessing theme
 ├── switcher.ts                 # Runtime theme application logic
@@ -66,11 +67,8 @@ src/theme/
 ├── deployment-guide.ts         # Verdaccio, CI/CD, CDN setup
 ├── DOCUMENTATION.tsx           # Implementation documentation component
 └── themes/
+  ├── catalogue.json         # Single source of truth for all themes
     ├── index.ts               # Theme catalogue export
-    ├── light.ts               # Light theme definition
-    ├── dark.ts                # Dark theme definition
-    ├── ocean.ts               # Ocean theme definition
-    └── compact.ts             # Compact theme definition
 
 src/components/
 ├── ThemeSelector.tsx          # Theme selector dropdown
@@ -168,14 +166,14 @@ Every theme includes tokens across these categories:
 
 ### Spacing
 
-- `--spacing-unit` — Base unit (8px or 4px)
-- `--spacing-xs`, `--spacing-sm`, `--spacing-md`, `--spacing-lg`, `--spacing-xl`, `--spacing-2xl` — Spacing scale
+- `--spacing-unit` — Base unit (4px or 2px)
+- `--spacing-xs`, `--spacing-sm`, `--spacing-md`, `--spacing-lg`, `--spacing-xl` — Spacing scale
 
 ### Layout
 
 - `--sidebar-width` — Sidebar column width
 - `--header-height` — Header/nav height
-- `--container-width` — Max content width
+- `--container-max-width` — Max content width
 - `--card-padding` — Padding inside cards
 
 ### Classes (not CSS variables)
@@ -198,11 +196,11 @@ export function MyComponent() {
 
   return (
     <div className={styles.container}>
-      <h1>Current: {currentTheme.meta.label}</h1>
+      <h1>Current: {currentTheme}</h1>
 
       <select onChange={(e) => setTheme(e.target.value)}>
-        {Object.entries(themes).map(([key, theme]) => (
-          <option key={key} value={key}>
+        {themes.map((theme) => (
+          <option key={theme.themeName} value={theme.themeName}>
             {theme.meta.label}
           </option>
         ))}
@@ -385,6 +383,8 @@ For local development and CI/CD:
 # .env.local
 VERDACCIO_URL=https://verdaccio.company.com
 CDN_URL=https://cdn.company.com/themes
+VITE_THEME_STABLE_URL=https://cdn.company.com/themes/stable/all-themes.js
+VITE_THEME_BUNDLE_TIMEOUT_MS=6000
 THEME_OUTPUT_DIR=dist/theme
 THEME_BUNDLE_VERSION=1.0.0
 NODE_ENV=production

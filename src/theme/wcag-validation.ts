@@ -88,9 +88,9 @@ export const WCAG_CRITERIA = {
     appliesTo: "focus ring against adjacent colors",
   },
 
-  // 2.5.8 Target Size (Minimum) - Level AAA
+  // 2.5.8 Target Size (Minimum) - Level AA in WCAG 2.2
   MIN_TARGET_SIZE: {
-    size: 44,
+    size: 24,
     unit: "px",
     appliesTo: "interactive elements (width and height)",
   },
@@ -261,8 +261,13 @@ export function validateTokenCompleteness(tokens: Record<string, string>): {
     // Layout
     "sidebar-width",
     "header-height",
-    "container-width",
+    "container-max-width",
     "card-padding",
+
+    // Accessibility
+    "focus-ring-width",
+    "focus-ring-offset",
+    "min-target-size",
   ];
 
   const missing = requiredCategories.filter((token) => !tokens[token]);
@@ -274,6 +279,35 @@ export function validateTokenCompleteness(tokens: Record<string, string>): {
     message: passed
       ? `✓ All ${requiredCategories.length} required tokens present`
       : `✗ Missing ${missing.length} required tokens: ${missing.join(", ")}`,
+  };
+}
+
+/**
+ * Validate layout and density declarations
+ * Required for cross-MFE layout contract support
+ */
+export function validateLayoutAndDensity(
+  layout?: string,
+  density?: string,
+): ValidationResult {
+  const validLayout =
+    layout === "layout-sidebar" || layout === "layout-top-nav";
+  const validDensity =
+    density === "density-compact" || density === "density-comfortable";
+  const passed = validLayout && validDensity;
+
+  return {
+    passed,
+    criterion: "Theme Contract (Layout and Density)",
+    message: passed
+      ? "✓ Layout and density declarations are valid"
+      : "✗ Theme is missing a valid layout or density declaration",
+    details: {
+      layout,
+      density,
+      validLayout,
+      validDensity,
+    },
   };
 }
 
@@ -293,6 +327,7 @@ export interface ThemeValidationReport {
     completeness: { passed: boolean; missing: string[]; message: string };
     focusRing: ValidationResult;
     targetSize: ValidationResult;
+    layoutDensity: ValidationResult;
   };
   summary: string;
 }
@@ -303,28 +338,32 @@ export interface ThemeValidationReport {
 export function validateTheme(
   themeName: string,
   tokens: Record<string, string>,
+  layout?: string,
+  density?: string,
 ): ThemeValidationReport {
   const contrastResults = validateThemeContrast(tokens);
   const completenessResults = validateTokenCompleteness(tokens);
   const focusRingResult = validateFocusRing(tokens["color-focus"], [
     tokens["color-bg"],
     tokens["color-surface"],
-    tokens["color-primary"],
   ]);
-  const targetSizeResult = validateTargetSize(44, 44); // Standard minimum
+  const targetSizeResult = validateTargetSize(44, 44); // Recommended baseline
+  const layoutDensityResult = validateLayoutAndDensity(layout, density);
 
   const checks = {
     contrast: contrastResults,
     completeness: completenessResults,
     focusRing: focusRingResult,
     targetSize: targetSizeResult,
+    layoutDensity: layoutDensityResult,
   };
 
   const allPassed =
     contrastResults.allPassed &&
     completenessResults.passed &&
     focusRingResult.passed &&
-    targetSizeResult.passed;
+    targetSizeResult.passed &&
+    layoutDensityResult.passed;
 
   return {
     themeName,

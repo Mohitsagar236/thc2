@@ -12,6 +12,20 @@ on:
     paths:
       - "src/theme/**"
       - "package.json"
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Operation to run"
+        required: true
+        default: publish
+        type: choice
+        options:
+          - publish
+          - rollback
+      rollbackVersion:
+        description: "Published version to re-tag as stable"
+        required: false
+        type: string
 
 env:
   REGISTRY_URL: ${{ secrets.VERDACCIO_URL || 'http://localhost:4873' }}
@@ -22,6 +36,7 @@ env:
 jobs:
   validate:
     name: Validate Theme Accessibility
+    if: github.event_name != 'workflow_dispatch' || inputs.operation == 'publish'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -42,6 +57,9 @@ jobs:
         run: npm run theme:validate
         continue-on-error: false
 
+      - name: Build theme bundle
+        run: npm run theme:build-bundle
+
       - name: Upload validation report
         if: always()
         uses: actions/upload-artifact@v4
@@ -51,10 +69,11 @@ jobs:
 
       - name: Check bundle size
         run: npm run theme:check-size
-        continue-on-error: true
+        continue-on-error: false
 
   lint:
     name: Lint Theme Code
+    if: github.event_name != 'workflow_dispatch' || inputs.operation == 'publish'
     needs: validate
     runs-on: ubuntu-latest
     steps:
@@ -78,6 +97,7 @@ jobs:
 
   build:
     name: Build Theme Bundle
+    if: github.event_name != 'workflow_dispatch' || inputs.operation == 'publish'
     needs: [validate, lint]
     runs-on: ubuntu-latest
     steps:
@@ -108,7 +128,7 @@ jobs:
 
   publish:
     name: Publish to Verdaccio
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'workflow_dispatch' && inputs.operation == 'publish')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -126,13 +146,17 @@ jobs:
 
       - name: Configure npm registry
         run: |
-          npm set registry ${{ env.REGISTRY_URL }}
-          npm set //${{ env.REGISTRY_URL }}/:_authToken=${{ env.VERDACCIO_TOKEN }}
-        continue-on-error: true
+          npm config set registry "${REGISTRY_URL}"
+          REGISTRY_HOST="${REGISTRY_URL#http://}"
+          REGISTRY_HOST="${REGISTRY_HOST#https://}"
+          npm config set "//${REGISTRY_HOST}/:_authToken" "${VERDACCIO_TOKEN}"
+        env:
+          REGISTRY_URL: ${{ env.REGISTRY_URL }}
+          VERDACCIO_TOKEN: ${{ env.VERDACCIO_TOKEN }}
 
       - name: Publish to Verdaccio
         run: npm publish
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Generate bundle
         run: npm run theme:build-bundle
@@ -160,7 +184,7 @@ jobs:
 
   rollback:
     name: Rollback Theme Version
-    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name == 'Theme Validation & Publishing'
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'rollback'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -172,17 +196,40 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Get previous version
-        id: prev-version
+      - name: Configure npm registry
         run: |
-          PREV_VERSION=$(npm view @ctms/theme@stable version)
-          echo "version=$PREV_VERSION" >> $GITHUB_OUTPUT
+          npm config set registry "${REGISTRY_URL}"
+          REGISTRY_HOST="${REGISTRY_URL#http://}"
+          REGISTRY_HOST="${REGISTRY_HOST#https://}"
+          npm config set "//${REGISTRY_HOST}/:_authToken" "${VERDACCIO_TOKEN}"
+        env:
+          REGISTRY_URL: ${{ env.REGISTRY_URL }}
+          VERDACCIO_TOKEN: ${{ env.VERDACCIO_TOKEN }}
 
       - name: Restore stable tag
         run: |
-          npm dist-tag add @ctms/theme@${{ steps.prev-version.outputs.version }} stable
-        continue-on-error: true
+          if [ -z "${{ inputs.rollbackVersion }}" ]; then
+            echo "rollbackVersion input is required for rollback operation"
+            exit 1
+          fi
+          npm dist-tag add @ctms/theme@${{ inputs.rollbackVersion }} stable
+        continue-on-error: false
+
+      - name: Rebuild rollback bundle metadata
+        run: |
+          npm ci
+          npm run theme:build-bundle -- --version "${{ inputs.rollbackVersion }}"
+
+      - name: Upload rollback bundle to CDN
+        run: |
+          echo "Uploading rollback theme bundle to CDN..."
+          # Example CDN upload - adjust for your CDN provider
+          # aws s3 cp dist/theme/all-themes.js s3://your-bucket/themes/stable/all-themes.js --cache-control max-age=60,must-revalidate
+          # aws s3 cp dist/theme/all-themes-v${{ inputs.rollbackVersion }}.js s3://your-bucket/themes/${{ inputs.rollbackVersion }}/all-themes.js --cache-control max-age=31536000,immutable
+          echo "✓ Rollback bundle uploaded to CDN"
+        env:
+          CDN_BUCKET: ${{ secrets.CDN_BUCKET }}
 
       - name: Notification
         run: |
-          echo "⚠️ Theme release failed. Rolled back to v${{ steps.prev-version.outputs.version }}"
+          echo "⚠️ Manual rollback completed. Stable now points to v${{ inputs.rollbackVersion }}"

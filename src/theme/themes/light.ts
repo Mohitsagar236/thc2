@@ -28,8 +28,7 @@ export const lightTheme: ThemeDefinition = {
     "color-focus": "#2563EB", // Blue focus ring
 
     // Typography tokens
-    "font-family-base":
-      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "font-family-base": "'Inter', sans-serif",
     "font-size-base": "16px",
     "font-size-lg": "18px",
     "font-size-sm": "14px",

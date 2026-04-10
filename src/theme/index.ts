@@ -32,7 +32,13 @@ export {
   cacheThemeBundle,
   getCachedThemeBundle,
   clearThemeCache,
+  registerThemeLogoutCleanup,
+  THEME_STORAGE_KEYS,
 } from "./switcher";
+
+// Theme bundle loader
+export { loadThemeCatalogue, getThemeBundleUrl } from "./loader";
+export type { ThemeCatalogueSource } from "./loader";
 
 // Styles
 export { injectThemeStyles, getSpacing, getColor, getFontSize } from "./styles";
@@ -56,6 +62,7 @@ export {
   validateTargetSize,
   validateThemeContrast,
   validateTokenCompleteness,
+  validateLayoutAndDensity,
   validateTheme,
   validateThemeCatalogue,
 } from "./wcag-validation";

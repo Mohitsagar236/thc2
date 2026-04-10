@@ -76,6 +76,8 @@ export interface ThemeCatalogue {
 export interface ThemeContextType {
   currentTheme: string;
   themes: ThemeDefinition[];
+  catalogueVersion: string;
+  catalogueSource: "global" | "cdn" | "local-cache" | "embedded";
   setTheme: (themeName: string) => void;
   applyTheme: (themeName: string) => void;
   getThemeByName: (name: string) => ThemeDefinition | undefined;

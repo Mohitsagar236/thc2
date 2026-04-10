@@ -28,8 +28,7 @@ export const darkTheme: ThemeDefinition = {
     "color-focus": "#60A5FA", // Light blue focus ring
 
     // Typography tokens
-    "font-family-base":
-      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "font-family-base": "'Inter', sans-serif",
     "font-size-base": "16px",
     "font-size-lg": "18px",
     "font-size-sm": "14px",

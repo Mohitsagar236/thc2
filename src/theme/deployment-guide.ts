@@ -60,6 +60,10 @@ CDN_REGION=us-east-1
 CDN_ACCESS_KEY=<SENSITIVE - from secrets manager>
 CDN_SECRET_KEY=<SENSITIVE - from secrets manager>
 
+# Runtime bundle loading (Vite-exposed)
+VITE_THEME_STABLE_URL=https://cdn.company.com/themes/stable/all-themes.js
+VITE_THEME_BUNDLE_TIMEOUT_MS=6000
+
 # Build Configuration
 THEME_OUTPUT_DIR=dist/theme
 THEME_BUNDLE_VERSION=1.0.0
@@ -268,6 +272,11 @@ npm view @ctms/theme versions
 
 # Step 2: Revert stable tag to previous version
 npm dist-tag add @ctms/theme@2.0.1 stable
+
+# Or run the rollback workflow manually:
+# GitHub Actions -> Theme Validation & Publishing -> Run workflow
+# operation=rollback
+# rollbackVersion=2.0.1
 
 # Step 3: Verify tag change
 npm view @ctms/theme@stable version

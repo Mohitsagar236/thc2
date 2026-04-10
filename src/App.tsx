@@ -1,9 +1,12 @@
 import { useTheme } from "@/theme";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { ThemedCard } from "@/components/ThemedCard";
+import styles from "./App.module.css";
 
 function App() {
-  const { currentTheme, themes } = useTheme();
+  const { currentTheme, themes, catalogueVersion, catalogueSource } =
+    useTheme();
+  const themeNames = themes.map((theme) => theme.meta.label).join(", ");
 
   const features = [
     {
@@ -14,7 +17,7 @@ function App() {
     },
     {
       title: "Multiple Themes",
-      description: `Choose from ${themes.length} available themes: Light, Dark, Ocean, and Compact.`,
+      description: `Choose from ${themes.length} available themes: ${themeNames}.`,
       status: "info" as const,
     },
     {
@@ -42,172 +45,142 @@ function App() {
     },
   ];
 
+  const stats = [
+    {
+      label: "Active Theme",
+      value: currentTheme,
+    },
+    {
+      label: "Available Themes",
+      value: String(themes.length),
+    },
+    {
+      label: "Compliance",
+      value: "WCAG 2.2 AA",
+    },
+    {
+      label: "Switch Time",
+      value: "Instant",
+    },
+  ];
+
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "var(--color-bg)",
-        color: "var(--color-text)",
-        padding: "var(--spacing-lg)",
-      }}
-    >
-      <section
-        style={{
-          maxWidth: "1280px",
-          margin: "0 auto",
-        }}
-      >
-        {/* Header with Theme Selector */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "var(--spacing-xl)",
-            paddingBottom: "var(--spacing-lg)",
-            borderBottom: "1px solid var(--color-border)",
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                margin: "0 0 var(--spacing-sm) 0",
-                fontSize: "var(--font-size-xl)",
-                fontWeight: "var(--font-weight-semibold)",
-              }}
-            >
-              Theme Configuration System
-            </h1>
-            <p
-              style={{
-                margin: 0,
-                color: "var(--color-text-muted)",
-                fontSize: "var(--font-size-sm)",
-              }}
-            >
-              Current theme: <strong>{currentTheme}</strong>
-            </p>
+    <main className={styles.page}>
+      <section className={styles.shell}>
+        <header className={styles.topbar}>
+          <div className={styles.brand}>
+            <span className={styles.brandMark} aria-hidden="true">
+              CT
+            </span>
+            <div>
+              <p className={styles.brandName}>CTMS Theme Hub</p>
+              <p className={styles.brandMeta}>
+                Live token orchestration for micro frontends
+              </p>
+            </div>
           </div>
           <ThemeSelector />
-        </div>
+        </header>
 
-        {/* Features Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "var(--spacing-lg)",
-            marginTop: "var(--spacing-xl)",
-          }}
-        >
-          {features.map((feature) => (
-            <ThemedCard
-              key={feature.title}
-              title={feature.title}
-              description={feature.description}
-              status={feature.status}
-            />
-          ))}
-        </div>
-
-        {/* Documentation Section */}
-        <div
-          style={{
-            marginTop: "var(--spacing-xl)",
-            padding: "var(--card-padding)",
-            backgroundColor: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "8px",
-          }}
-        >
-          <h2
-            style={{
-              margin: "0 0 var(--spacing-md) 0",
-              fontSize: "var(--font-size-lg)",
-              fontWeight: "var(--font-weight-semibold)",
-            }}
-          >
-            How It Works
-          </h2>
-          <ul
-            style={{
-              margin: "0",
-              paddingLeft: "var(--spacing-lg)",
-              lineHeight: "var(--line-height-base)",
-            }}
-          >
-            <li style={{ marginBottom: "var(--spacing-sm)" }}>
-              <strong>Pipeline Flow:</strong> Designers update tokens → CI
-              validates accessibility → bundle compiled → deployed to CDN
-            </li>
-            <li style={{ marginBottom: "var(--spacing-sm)" }}>
-              <strong>Runtime Flow:</strong> Bundle loaded once → user selects
-              theme → CSS variables applied → all MFEs reflect change instantly
-            </li>
-            <li style={{ marginBottom: "var(--spacing-sm)" }}>
-              <strong>Storage:</strong> Selection persisted to localStorage,
-              cached bundle used as CDN fallback
-            </li>
-            <li>
-              <strong>Accessibility:</strong> Every theme tested against WCAG
-              2.2 AA criteria automatically
-            </li>
-          </ul>
-        </div>
-
-        {/* Integration Section */}
-        <div
-          style={{
-            marginTop: "var(--spacing-xl)",
-            padding: "var(--card-padding)",
-            backgroundColor: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "8px",
-          }}
-        >
-          <h2
-            style={{
-              margin: "0 0 var(--spacing-md) 0",
-              fontSize: "var(--font-size-lg)",
-              fontWeight: "var(--font-weight-semibold)",
-            }}
-          >
-            MFE Integration
-          </h2>
-          <p style={{ margin: "var(--spacing-md) 0 0 0" }}>
-            All MFEs consuming this theme system must follow the integration
-            contract:
+        <section className={styles.hero}>
+          <p className={styles.eyebrow}>Design Operations</p>
+          <h1 className={styles.heroTitle}>
+            Professional Runtime Theme Experience
+          </h1>
+          <p className={styles.heroLead}>
+            Ship new visual systems without redeploying every MFE. Users switch
+            themes in real time, and token updates stay governed by
+            accessibility gates, versioning, and rollback safety.
           </p>
-          <ul
-            style={{
-              marginTop: "var(--spacing-md)",
-              paddingLeft: "var(--spacing-lg)",
-            }}
-          >
-            <li>
-              Use CSS custom properties exclusively (var() instead of hardcoded
-              values)
-            </li>
-            <li>Ship CSS for all layout variants and density classes</li>
-            <li>Never load the theme bundle independently</li>
-            <li>Listen for theme-changed custom event on window if needed</li>
-          </ul>
-        </div>
 
-        {/* Footer */}
-        <footer
-          style={{
-            marginTop: "var(--spacing-xl)",
-            paddingTop: "var(--spacing-lg)",
-            borderTop: "1px solid var(--color-border)",
-            color: "var(--color-text-muted)",
-            fontSize: "var(--font-size-sm)",
-            textAlign: "center",
-          }}
-        >
-          <p>
-            Theme catalogue version 1.0.0 • WCAG 2.2 AA compliant • All themes
-            support dark mode and multiple layout variants
+          <div className={styles.statsGrid}>
+            {stats.map((stat) => (
+              <article key={stat.label} className={styles.stat}>
+                <p className={styles.statLabel}>{stat.label}</p>
+                <p className={styles.statValue}>{stat.value}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Capability Matrix</h2>
+              <p className={styles.sectionKicker}>
+                Runtime switching, accessibility enforcement, and release
+                safety.
+              </p>
+            </div>
+            <p className={styles.versionPill}>
+              Catalogue v{catalogueVersion} ({catalogueSource})
+            </p>
+          </div>
+
+          <div className={styles.featureGrid}>
+            {features.map((feature) => (
+              <div key={feature.title} className={styles.featureItem}>
+                <ThemedCard
+                  title={feature.title}
+                  description={feature.description}
+                  status={feature.status}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.split}>
+          <article className={styles.panel}>
+            <h3 className={styles.panelTitle}>Pipeline Flow</h3>
+            <ul className={styles.flowList}>
+              <li>
+                Token updates enter source control with semantic versioning.
+              </li>
+              <li>CI validates WCAG rules across every published theme.</li>
+              <li>
+                Verdaccio stores every version for instant rollback options.
+              </li>
+              <li>CDN receives stable and versioned all-themes.js bundles.</li>
+            </ul>
+          </article>
+
+          <article className={styles.panel}>
+            <h3 className={styles.panelTitle}>Runtime Flow</h3>
+            <ul className={styles.flowList}>
+              <li>Host loads one bundle and populates selector dynamically.</li>
+              <li>
+                Selection applies variables plus layout and density classes.
+              </li>
+              <li>MFEs reflect changes instantly through CSS inheritance.</li>
+              <li>
+                Preference persists locally and recovers on next page load.
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <section className={styles.contractPanel}>
+          <article className={styles.panel}>
+            <h3 className={styles.panelTitle}>MFE Integration Contract</h3>
+            <ul className={styles.contractList}>
+              <li>Use CSS variables for color, spacing, and typography.</li>
+              <li>Ship rules for both layout-sidebar and layout-top-nav.</li>
+              <li>Support density-comfortable and density-compact styles.</li>
+              <li>
+                Do not write to ctms:theme-preference or ctms:token-cache.
+              </li>
+              <li>
+                Listen to theme-changed for non-CSS renderers like canvas.
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <footer className={styles.footer}>
+          <p className={styles.footerText}>
+            Theme updates roll out from stable CDN URL with no website
+            redeployment required.
           </p>
         </footer>
       </section>

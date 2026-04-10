@@ -15,7 +15,7 @@
     "theme:validate": "node scripts/validate-themes.js",
     "theme:build-bundle": "node scripts/build-theme-bundle.js",
     "theme:check-size": "node scripts/check-bundle-size.js",
-    "theme:publish": "npm publish && npm dist-tag add @ctms/theme@$(node -p \"require('./package.json').version\") stable"
+    "theme:publish": "node scripts/publish-theme.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

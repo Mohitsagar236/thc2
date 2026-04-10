@@ -23,8 +23,8 @@ console.log("📦 Checking theme bundle size...\n");
 const bundlePath = "dist/theme/all-themes.js";
 
 if (!fs.existsSync(bundlePath)) {
-  console.log("⚠️  Bundle not found. Run 'npm run build' first.\n");
-  process.exit(0);
+  console.log("❌ Bundle not found. Run 'npm run theme:build-bundle' first.\n");
+  process.exit(1);
 }
 
 const bundleContent = fs.readFileSync(bundlePath);

@@ -4,10 +4,16 @@
  * No network call at switch time - all themes are pre-loaded
  */
 
-import { ThemeDefinition, ColorScheme } from "./types";
+import { ThemeDefinition, ColorScheme, ThemeCatalogue } from "./types";
 
 const THEME_PREFERENCE_KEY = "ctms:theme-preference";
 const TOKEN_CACHE_KEY = "ctms:token-cache";
+const LOGOUT_EVENT_NAME = "ctms:logout";
+
+export const THEME_STORAGE_KEYS = {
+  preference: THEME_PREFERENCE_KEY,
+  tokenCache: TOKEN_CACHE_KEY,
+} as const;
 
 /**
  * Apply CSS custom properties to document root
@@ -20,6 +26,24 @@ function applyCSSVariables(theme: ThemeDefinition): void {
     const cssVarName = `--${tokenName}`;
     root.style.setProperty(cssVarName, value);
   });
+}
+
+function isDarkTheme(theme: ThemeDefinition): boolean {
+  const background = theme.tokens["color-bg"];
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(background);
+
+  if (!match) {
+    return theme.themeName.toLowerCase().includes("dark");
+  }
+
+  const [r, g, b] = [
+    parseInt(match[1], 16) / 255,
+    parseInt(match[2], 16) / 255,
+    parseInt(match[3], 16) / 255,
+  ];
+
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance < 0.45;
 }
 
 /**
@@ -52,10 +76,15 @@ function applyLayoutAndDensity(theme: ThemeDefinition): void {
 /**
  * Dispatch custom event for MFEs that need programmatic reaction
  */
-function dispatchThemeChangeEvent(themeName: string): void {
+function dispatchThemeChangeEvent(theme: ThemeDefinition): void {
   const event = new CustomEvent("theme-changed", {
-    detail: { themeName },
+    detail: {
+      themeName: theme.themeName,
+      layout: theme.layout,
+      density: theme.density,
+    },
     bubbles: true,
+    composed: true,
     cancelable: false,
   });
   window.dispatchEvent(event);
@@ -65,8 +94,13 @@ function dispatchThemeChangeEvent(themeName: string): void {
  * Apply a theme atomically - CSS vars, layout classes, and event dispatched together
  */
 export function applyTheme(theme: ThemeDefinition): void {
+  const root = document.documentElement;
+
   // Apply CSS variables
   applyCSSVariables(theme);
+
+  root.dataset.theme = isDarkTheme(theme) ? "dark" : "light";
+  root.style.colorScheme = root.dataset.theme;
 
   // Apply layout and density classes
   applyLayoutAndDensity(theme);
@@ -79,7 +113,7 @@ export function applyTheme(theme: ThemeDefinition): void {
   }
 
   // Dispatch event for MFEs
-  dispatchThemeChangeEvent(theme.themeName);
+  dispatchThemeChangeEvent(theme);
 }
 
 /**
@@ -152,9 +186,9 @@ export function onOSColorSchemeChange(
 /**
  * Cache theme bundle in localStorage for cold load fallback
  */
-export function cacheThemeBundle(themes: ThemeDefinition[]): void {
+export function cacheThemeBundle(catalogue: ThemeCatalogue): void {
   try {
-    localStorage.setItem(TOKEN_CACHE_KEY, JSON.stringify(themes));
+    localStorage.setItem(TOKEN_CACHE_KEY, JSON.stringify(catalogue));
   } catch {
     console.warn("Failed to cache theme bundle");
   }
@@ -163,10 +197,10 @@ export function cacheThemeBundle(themes: ThemeDefinition[]): void {
 /**
  * Retrieve cached theme bundle
  */
-export function getCachedThemeBundle(): ThemeDefinition[] | null {
+export function getCachedThemeBundle(): ThemeCatalogue | null {
   try {
     const cached = localStorage.getItem(TOKEN_CACHE_KEY);
-    return cached ? (JSON.parse(cached) as ThemeDefinition[]) : null;
+    return cached ? (JSON.parse(cached) as ThemeCatalogue) : null;
   } catch {
     return null;
   }
@@ -181,4 +215,20 @@ export function clearThemeCache(): void {
   } catch {
     console.warn("Failed to clear theme cache");
   }
+}
+
+/**
+ * Register a logout handler that clears cached bundle data
+ * Host applications can dispatch window event "ctms:logout" on sign-out
+ */
+export function registerThemeLogoutCleanup(): () => void {
+  const handler = () => {
+    clearThemeCache();
+  };
+
+  window.addEventListener(LOGOUT_EVENT_NAME, handler);
+
+  return () => {
+    window.removeEventListener(LOGOUT_EVENT_NAME, handler);
+  };
 }

@@ -7,7 +7,14 @@ import { JSX, ReactNode, useEffect, useState } from "react";
 import { ThemeContextType, ThemeDefinition } from "./types";
 import { ThemeContext } from "./context";
 import { themeCatalogue } from "./themes";
-import { applyTheme, resolveInitialTheme, cacheThemeBundle } from "./switcher";
+import {
+  applyTheme,
+  resolveInitialTheme,
+  cacheThemeBundle,
+  registerThemeLogoutCleanup,
+} from "./switcher";
+import { loadThemeCatalogue } from "./loader";
+import type { ThemeCatalogueSource } from "./loader";
 
 /**
  * Theme Provider Component
@@ -18,40 +25,66 @@ export function ThemeProvider({
 }: {
   children: ReactNode;
 }): JSX.Element {
-  const [currentTheme, setCurrentTheme] = useState<string>("");
-  const [themes, setThemes] = useState<ThemeDefinition[]>([]);
+  const [currentTheme, setCurrentTheme] = useState<string>(
+    themeCatalogue.defaults.light,
+  );
+  const [themes, setThemes] = useState<ThemeDefinition[]>(
+    themeCatalogue.themes,
+  );
+  const [catalogueVersion, setCatalogueVersion] = useState<string>(
+    themeCatalogue.version,
+  );
+  const [catalogueSource, setCatalogueSource] =
+    useState<ThemeCatalogueSource>("embedded");
 
   // Initialize theme on mount
   useEffect(() => {
-    // Set available themes
-    setThemes(themeCatalogue.themes);
+    let mounted = true;
+    const unregisterLogoutCleanup = registerThemeLogoutCleanup();
 
-    // Cache the bundle for CDN fallback
-    cacheThemeBundle(themeCatalogue.themes);
+    async function initializeThemeSystem(): Promise<void> {
+      const loaded = await loadThemeCatalogue(themeCatalogue);
+      if (!mounted) {
+        return;
+      }
 
-    // Resolve initial theme
-    const initialTheme = resolveInitialTheme(
-      themeCatalogue.themes,
-      themeCatalogue.defaults.light,
-      themeCatalogue.defaults.dark,
-    );
+      setThemes(loaded.catalogue.themes);
+      setCatalogueVersion(loaded.catalogue.version);
+      setCatalogueSource(loaded.source);
 
-    setCurrentTheme(initialTheme);
+      // Cache the latest bundle for CDN fallback
+      cacheThemeBundle(loaded.catalogue);
 
-    // Apply the resolved theme
-    const themeToApply = themeCatalogue.themes.find(
-      (t) => t.themeName === initialTheme,
-    );
-    if (themeToApply) {
-      applyTheme(themeToApply);
+      const initialTheme = resolveInitialTheme(
+        loaded.catalogue.themes,
+        loaded.catalogue.defaults.light,
+        loaded.catalogue.defaults.dark,
+      );
+
+      setCurrentTheme(initialTheme);
+
+      const themeToApply = loaded.catalogue.themes.find(
+        (theme) => theme.themeName === initialTheme,
+      );
+
+      if (themeToApply) {
+        applyTheme(themeToApply);
+      }
     }
+
+    void initializeThemeSystem();
+
+    return () => {
+      mounted = false;
+      unregisterLogoutCleanup();
+    };
   }, []);
 
   /**
    * Get theme by name
    */
   const getThemeByName = (name: string): ThemeDefinition | undefined => {
-    return themeCatalogue.themes.find((t) => t.themeName === name);
+    return themes.find((theme) => theme.themeName === name);
   };
 
   /**
@@ -68,6 +101,8 @@ export function ThemeProvider({
   const value: ThemeContextType = {
     currentTheme,
     themes,
+    catalogueVersion,
+    catalogueSource,
     setTheme: handleSetTheme,
     applyTheme: handleSetTheme,
     getThemeByName,

@@ -21,7 +21,7 @@ const baseStyles = `
     --color-border: #D1D5DB;
     --color-focus: #2563EB;
 
-    --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-family-base: 'Inter', sans-serif;
     --font-size-base: 16px;
     --font-size-lg: 18px;
     --font-size-sm: 14px;
@@ -98,13 +98,6 @@ const baseStyles = `
     }
   }
 
-  /* 200% zoom support - WCAG 1.4.10 */
-  @media (max-zoom: 2) {
-    body {
-      overflow-x: hidden;
-    }
-  }
-
   /* Layout variants */
   body.layout-sidebar {
     --sidebar-enabled: true;
@@ -137,7 +130,7 @@ const baseStyles = `
     --font-size-base: 16px;
   }
 
-  /* Preffers-reduced-motion support - Accessibility */
+  /* Prefers-reduced-motion support - Accessibility */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

@@ -36,7 +36,7 @@
  *
  * 5. Optionally Listen for theme-changed Event
  *    - Dispatch location: window (bubbles: true, composed: true)
- *    - Event type: CustomEvent<{ themeName: string }>
+ *    - Event type: CustomEvent<{ themeName: string; layout?: string; density?: string }>
  *    - Use case: re-render canvas/SVG that doesn't respond to CSS changes
  *    - Example: canvas-based charting libraries
  */
@@ -94,7 +94,7 @@ export function MyComponent() {
 }
 
 .button:hover {
-  background-color: var(--color-primary-dark);
+  background-color: var(--color-info);
 }
 
 .button:focus {

@@ -28,8 +28,7 @@ export const compactTheme: ThemeDefinition = {
     "color-focus": "#2563EB",
 
     // Typography tokens - slightly smaller
-    "font-family-base":
-      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "font-family-base": "'Inter', sans-serif",
     "font-size-base": "14px",
     "font-size-lg": "16px",
     "font-size-sm": "12px",
