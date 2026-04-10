@@ -14,7 +14,9 @@
     "prepare": "husky",
     "theme:validate": "node scripts/validate-themes.js",
     "theme:build-bundle": "node scripts/build-theme-bundle.js",
+    "theme:build-from-registry": "node scripts/build-theme-bundle-from-registry.js",
     "theme:check-size": "node scripts/check-bundle-size.js",
+    "theme:upload": "node scripts/upload-theme-bundle.js",
     "theme:publish": "node scripts/publish-theme.js"
   },
   "lint-staged": {

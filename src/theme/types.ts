@@ -59,8 +59,8 @@ export interface ThemeDefinition {
   themeName: string;
   meta: ThemeMeta;
   tokens: ThemeTokens;
-  layout?: "layout-sidebar" | "layout-top-nav";
-  density?: "density-compact" | "density-comfortable";
+  layout: "layout-sidebar" | "layout-top-nav";
+  density: "density-compact" | "density-comfortable";
 }
 
 export interface ThemeCatalogue {

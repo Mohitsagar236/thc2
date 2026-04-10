@@ -5,12 +5,14 @@ on:
     branches: [main, develop]
     paths:
       - "src/theme/**"
+      - "scripts/**"
       - "package.json"
       - ".github/workflows/theme-publish.yml"
   pull_request:
     branches: [main, develop]
     paths:
       - "src/theme/**"
+      - "scripts/**"
       - "package.json"
   workflow_dispatch:
     inputs:
@@ -30,6 +32,8 @@ on:
 env:
   REGISTRY_URL: ${{ secrets.VERDACCIO_URL || 'http://localhost:4873' }}
   VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+  THEME_PACKAGE_NAME: ${{ vars.THEME_PACKAGE_NAME || '@ctms/theme' }}
+  CDN_UPLOAD_URL: ${{ secrets.CDN_UPLOAD_URL }}
   CDN_UPLOAD_KEY: ${{ secrets.CDN_UPLOAD_KEY }}
   NODE_VERSION: "18"
 
@@ -158,18 +162,23 @@ jobs:
         run: npm publish
         continue-on-error: false
 
-      - name: Generate bundle
-        run: npm run theme:build-bundle
+      - name: Tag published version as stable
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npm dist-tag add ${THEME_PACKAGE_NAME}@${VERSION} stable
+
+      - name: Generate bundle from published package
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npm run theme:build-from-registry -- --package "${THEME_PACKAGE_NAME}" --version "${VERSION}" --registry "${REGISTRY_URL}"
 
       - name: Upload to CDN
         run: |
-          echo "Uploading theme bundle to CDN..."
-          # Example CDN upload - adjust for your CDN provider
-          # aws s3 cp dist/theme/all-themes.js s3://your-bucket/themes/stable/all-themes.js
-          # aws s3 cp dist/theme/all-themes-v*.js s3://your-bucket/themes/$VERSION/all-themes.js
-          echo "✓ Bundle uploaded to CDN"
+          VERSION=$(node -p "require('./package.json').version")
+          npm run theme:upload -- --version "${VERSION}"
         env:
-          CDN_BUCKET: ${{ secrets.CDN_BUCKET }}
+          CDN_UPLOAD_URL: ${{ env.CDN_UPLOAD_URL }}
+          CDN_UPLOAD_KEY: ${{ env.CDN_UPLOAD_KEY }}
 
       - name: Post deployment summary
         if: success()
@@ -212,23 +221,20 @@ jobs:
             echo "rollbackVersion input is required for rollback operation"
             exit 1
           fi
-          npm dist-tag add @ctms/theme@${{ inputs.rollbackVersion }} stable
+          npm dist-tag add ${THEME_PACKAGE_NAME}@${{ inputs.rollbackVersion }} stable
         continue-on-error: false
 
-      - name: Rebuild rollback bundle metadata
+      - name: Rebuild rollback bundle from published package
         run: |
           npm ci
-          npm run theme:build-bundle -- --version "${{ inputs.rollbackVersion }}"
+          npm run theme:build-from-registry -- --package "${THEME_PACKAGE_NAME}" --version "${{ inputs.rollbackVersion }}" --registry "${REGISTRY_URL}"
 
       - name: Upload rollback bundle to CDN
         run: |
-          echo "Uploading rollback theme bundle to CDN..."
-          # Example CDN upload - adjust for your CDN provider
-          # aws s3 cp dist/theme/all-themes.js s3://your-bucket/themes/stable/all-themes.js --cache-control max-age=60,must-revalidate
-          # aws s3 cp dist/theme/all-themes-v${{ inputs.rollbackVersion }}.js s3://your-bucket/themes/${{ inputs.rollbackVersion }}/all-themes.js --cache-control max-age=31536000,immutable
-          echo "✓ Rollback bundle uploaded to CDN"
+          npm run theme:upload -- --version "${{ inputs.rollbackVersion }}"
         env:
-          CDN_BUCKET: ${{ secrets.CDN_BUCKET }}
+          CDN_UPLOAD_URL: ${{ env.CDN_UPLOAD_URL }}
+          CDN_UPLOAD_KEY: ${{ env.CDN_UPLOAD_KEY }}
 
       - name: Notification
         run: |

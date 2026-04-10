@@ -6,11 +6,12 @@
  * for CDN delivery and runtime theme switching.
  *
  * Usage:
- *   node scripts/build-theme-bundle.js [--output PATH] [--minify] [--version VERSION]
+ *   node scripts/build-theme-bundle.js [--output PATH] [--minify] [--version VERSION] [--catalogue PATH]
  *
  * Environment Variables:
  *   THEME_OUTPUT_DIR - Output directory (default: dist/theme)
  *   THEME_BUNDLE_VERSION - Bundle version (default: from catalogue/package.json)
+ *   THEME_CATALOGUE_PATH - Theme catalogue JSON path
  */
 
 import fs from "fs";
@@ -23,32 +24,49 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageJsonPath = path.join(__dirname, "../package.json");
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
-const cataloguePath = path.join(
+const defaultCataloguePath = path.join(
   __dirname,
   "../src/theme/themes/catalogue.json",
 );
-const rawCatalogue = JSON.parse(fs.readFileSync(cataloguePath, "utf-8"));
 
 const args = process.argv.slice(2);
 
 let outputDir = "dist/theme";
 let minify = false;
-let bundleVersion = rawCatalogue.version || packageJson.version;
+let cataloguePath = process.env.THEME_CATALOGUE_PATH || defaultCataloguePath;
+let bundleVersion = packageJson.version;
+let hasExplicitVersion = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--output" && args[i + 1]) outputDir = args[++i];
   if (args[i] === "--minify") minify = true;
-  if (args[i] === "--version" && args[i + 1]) bundleVersion = args[++i];
+  if (args[i] === "--version" && args[i + 1]) {
+    bundleVersion = args[++i];
+    hasExplicitVersion = true;
+  }
+  if (args[i] === "--catalogue" && args[i + 1]) cataloguePath = args[++i];
 }
 
 if (process.env.THEME_OUTPUT_DIR) outputDir = process.env.THEME_OUTPUT_DIR;
 if (process.env.THEME_BUNDLE_VERSION) {
   bundleVersion = process.env.THEME_BUNDLE_VERSION;
+  hasExplicitVersion = true;
+}
+
+if (!fs.existsSync(cataloguePath)) {
+  console.error(`Theme catalogue not found: ${cataloguePath}`);
+  process.exit(1);
+}
+
+const rawCatalogue = JSON.parse(fs.readFileSync(cataloguePath, "utf-8"));
+if (!hasExplicitVersion) {
+  bundleVersion = rawCatalogue.version || packageJson.version;
 }
 
 console.log("Building theme bundle...");
 console.log(`Version: ${bundleVersion}`);
 console.log(`Output: ${outputDir}`);
+console.log(`Catalogue: ${cataloguePath}`);
 
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });

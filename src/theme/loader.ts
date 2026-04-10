@@ -2,8 +2,9 @@ import { ThemeCatalogue, ThemeDefinition } from "./types";
 import { getCachedThemeBundle } from "./switcher";
 
 const THEME_GLOBAL_KEY = "__THEME_CATALOGUE__";
+const STABLE_BUNDLE_PATH = "/themes/stable/all-themes.js";
 const DEFAULT_BUNDLE_URL =
-  import.meta.env.VITE_THEME_STABLE_URL || "/themes/stable/all-themes.js";
+  import.meta.env.VITE_THEME_STABLE_URL || STABLE_BUNDLE_PATH;
 const BUNDLE_LOAD_TIMEOUT_MS = Number(
   import.meta.env.VITE_THEME_BUNDLE_TIMEOUT_MS || 6000,
 );
@@ -32,15 +33,30 @@ function isThemeDefinition(value: unknown): value is ThemeDefinition {
     themeName?: unknown;
     meta?: unknown;
     tokens?: unknown;
+    layout?: unknown;
+    density?: unknown;
   };
+
+  const hasValidLayout =
+    candidate.layout === "layout-sidebar" ||
+    candidate.layout === "layout-top-nav";
+  const hasValidDensity =
+    candidate.density === "density-compact" ||
+    candidate.density === "density-comfortable";
 
   return (
     typeof candidate.themeName === "string" &&
     candidate.meta !== null &&
     typeof candidate.meta === "object" &&
     candidate.tokens !== null &&
-    typeof candidate.tokens === "object"
+    typeof candidate.tokens === "object" &&
+    hasValidLayout &&
+    hasValidDensity
   );
+}
+
+function isStableThemeBundleUrl(url: string): boolean {
+  return /\/themes\/stable\/all-themes\.js(?:$|[?#])/i.test(url);
 }
 
 function normalizeThemeList(rawThemes: unknown): ThemeDefinition[] {
@@ -192,8 +208,10 @@ function ensureThemeScript(url: string, timeoutMs: number): Promise<void> {
 async function getCDNThemeCatalogue(
   fallback: ThemeCatalogue,
 ): Promise<ThemeCatalogue | null> {
+  const bundleUrl = getThemeBundleUrl();
+
   try {
-    await ensureThemeScript(DEFAULT_BUNDLE_URL, BUNDLE_LOAD_TIMEOUT_MS);
+    await ensureThemeScript(bundleUrl, BUNDLE_LOAD_TIMEOUT_MS);
   } catch {
     return null;
   }
@@ -227,5 +245,13 @@ export async function loadThemeCatalogue(
 }
 
 export function getThemeBundleUrl(): string {
+  if (!isStableThemeBundleUrl(DEFAULT_BUNDLE_URL)) {
+    console.warn(
+      `Theme bundle URL should point to a stable endpoint. Falling back to ${STABLE_BUNDLE_PATH}. Received: ${DEFAULT_BUNDLE_URL}`,
+    );
+
+    return STABLE_BUNDLE_PATH;
+  }
+
   return DEFAULT_BUNDLE_URL;
 }
