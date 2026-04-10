@@ -7,7 +7,20 @@ import prettier from "eslint-plugin-prettier";
 import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  {
+    ignores: [
+      "node_modules",
+      "dist",
+      "build",
+      ".vite",
+      "coverage",
+      "*.tsbuildinfo",
+      "vite.config.js",
+      "vite.config.d.ts",
+      ".DS_Store",
+      "*.log",
+    ],
+  },
   {
     extends: [
       js.configs.recommended,
