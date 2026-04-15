@@ -8,6 +8,26 @@ This directory contains the complete theme configuration system for the CTMS hos
 - **Production deployment** — Verdaccio, CI/CD, CDN pipeline
 - **MFE integration** — contract and guidelines for micro frontends
 
+## What Changed (Refactored Structure)
+
+✅ **Modular Architecture** — Separated `App.tsx` (30 lines) from business logic
+
+- Moved constants to `src/config/dashboard.config.ts`
+- Created 8 independent section components in `src/modules/dashboard/sections/`
+- Each component has single responsibility and is independently testable
+
+✅ **Improved Maintainability**
+
+- Before: 300+ lines of mixed logic in App.tsx
+- After: Clean orchestration with reusable, focused components
+- Config changes don't touch components
+
+✅ **Future-Ready**
+
+- Reserved `src/microfrontends/` for external module integration
+- Prepared structure for scaling horizontal and vertical
+- All components receive data via props or hooks (no tight coupling)
+
 ## Quick Start
 
 ### 1. Use Themes in Your Component
@@ -51,41 +71,107 @@ Never hardcode colors, fonts, or spacing. Always use CSS custom properties:
 ## File Structure
 
 ```
-src/theme/
-├── index.ts                    # Public API exports
-├── types.ts                    # TypeScript types and interfaces
-├── context.ts                  # React Context (in separate file to avoid Fast Refresh warning)
-├── provider.tsx                # ThemeProvider component
-├── loader.ts                   # CDN/global/cache catalogue loader
-├── hooks/
-│   └── useTheme.ts            # Custom hook for accessing theme
-├── switcher.ts                 # Runtime theme application logic
-├── styles.ts                   # CSS injection and utility functions
-├── wcag-validation.ts          # Accessibility validation utilities
-├── versioning.ts               # Version management and constraints
-├── mfe-integration-contract.ts # MFE integration guidelines
-├── deployment-guide.ts         # Verdaccio, CI/CD, CDN setup
-├── DOCUMENTATION.tsx           # Implementation documentation component
-└── themes/
-  ├── catalogue.json         # Single source of truth for all themes
-    ├── index.ts               # Theme catalogue export
-
-src/components/
-├── ThemeSelector.tsx          # Theme selector dropdown
-├── ThemeSelector.module.css   # Selector styles
-├── ThemedCard.tsx             # Example themed component
-└── ThemedCard.module.css      # Card component styles
+src/
+├── config/
+│   └── dashboard.config.ts     # Centralized dashboard constants (features, stats, etc.)
+│
+├── modules/                    # Feature Modules
+│   └── dashboard/
+│       └── sections/           # Modular dashboard components
+│           ├── DashboardHeader.tsx
+│           ├── HeroSection.tsx
+│           ├── CapabilityMatrix.tsx
+│           ├── FlowSection.tsx
+│           ├── CachingAndStartupSection.tsx
+│           ├── MFEIntegrationSection.tsx
+│           ├── DashboardFooter.tsx
+│           └── Footer.tsx
+│
+├── microfrontends/             # Reserved for micro-frontend modules
+│
+├── components/
+│   ├── ThemeSelector.tsx       # Theme selector dropdown
+│   ├── ThemeSelector.module.css
+│   ├── ThemedCard.tsx          # Feature card component
+│   └── ThemedCard.module.css
+│
+├── theme/                      # Theme System
+│   ├── index.ts                # Public API exports
+│   ├── types.ts                # TypeScript types and interfaces
+│   ├── context.ts              # React Context
+│   ├── provider.tsx            # ThemeProvider component
+│   ├── loader.ts               # CDN/global/cache catalogue loader
+│   ├── hooks/
+│   │   └── useTheme.ts         # Custom hook for accessing theme
+│   ├── switcher.ts             # Runtime theme application logic
+│   ├── styles.ts               # CSS injection and utility functions
+│   ├── wcag-validation.ts      # Accessibility validation utilities
+│   ├── versioning.ts           # Version management and constraints
+│   ├── mfe-integration-contract.ts
+│   ├── deployment-guide.ts
+│   ├── DOCUMENTATION.tsx
+│   └── themes/
+│       ├── catalogue.json      # Single source of truth for all themes
+│       └── index.ts            # Theme catalogue export
+│
+└── App.tsx                     # Main application (30 lines, orchestrates sections)
 
 scripts/
-├── build-theme-bundle.js      # Build all-themes.js for CDN
-├── validate-themes.js         # Run WCAG accessibility checks
-└── check-bundle-size.js       # Verify bundle size limits
+├── build-theme-bundle.js       # Build all-themes.js for CDN
+├── validate-themes.js          # Run WCAG accessibility checks
+└── check-bundle-size.js        # Verify bundle size limits
 
 .github/workflows/
-└── theme-publish.yml          # CI/CD pipeline for validation and publishing
+└── theme-publish.yml           # CI/CD pipeline for validation and publishing
 ```
 
 ## Architecture
+
+### Layered Design
+
+The application is structured in clean, independent layers:
+
+**1. Configuration Layer** (`src/config/`)
+
+- `dashboard.config.ts` — Single source of truth for all dashboard constants
+- Features, stats, caching policy, QA checks, MFE contract
+- Change data without touching components
+
+**2. Application Layer** (`src/App.tsx`)
+
+- Clean 30-line entry point orchestrating all sections
+- Wrapped by ThemeProvider for theme management
+- No business logic, purely compositional
+
+**3. Feature Modules** (`src/modules/dashboard/sections/`)
+
+- `DashboardHeader` — Logo + theme selector
+- `HeroSection` — Hero banner + key stats
+- `CapabilityMatrix` — Feature cards grid
+- `FlowSection` — Pipeline & runtime flows
+- `CachingAndStartupSection` — Caching policy + startup resolution
+- `MFEIntegrationSection` — MFE integration contract
+- `DashboardFooter` — QA gate checklist
+- `Footer` — Footer text
+- Each section is independent, reusable, and testable
+
+**4. Theme System Layer** (`src/theme/`)
+
+- Manages runtime theme switching without page reload
+- Provides CSS variables to all components
+- Loads from CDN, cache, or embedded catalogue
+- WCAG 2.2 AA validation built-in
+
+**5. Data Layer** (`src/theme/themes/`)
+
+- `catalogue.json` — Single source of truth for themes
+- 4 complete themes: Light, Dark, Ocean, Compact
+- Each contains tokens, layout, density configurations
+
+**6. Micro-frontends Layer** (`src/microfrontends/`)
+
+- Reserved for external module integrations
+- Will receive theme styles via CSS variables
 
 ### Two Flows
 
@@ -106,14 +192,16 @@ Selection saved to localStorage
 
 ### Key Pieces
 
-| Component           | Purpose                                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Themes**          | 4 complete theme definitions (Light, Dark, Ocean, Compact) with color, typography, spacing, and layout tokens |
-| **ThemeProvider**   | React Context wrapper that manages theme state and initialization                                             |
-| **useTheme**        | Custom hook for accessing current theme and switching themes                                                  |
-| **Switcher**        | Runtime logic that applies theme by setting CSS variables, classes, events, and localStorage                  |
-| **WCAG Validation** | Automated contrast checks, focus ring validation, token completeness checks                                   |
-| **Deployment**      | Verdaccio registry, GitHub Actions CI/CD, CDN caching strategy                                                |
+| Component              | Purpose                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Config**             | Centralized constants for dashboard (features, stats, policies, checks)                                       |
+| **Dashboard Sections** | Modular UI components, each with single responsibility                                                        |
+| **Themes**             | 4 complete theme definitions (Light, Dark, Ocean, Compact) with color, typography, spacing, and layout tokens |
+| **ThemeProvider**      | React Context wrapper that manages theme state and initialization                                             |
+| **useTheme**           | Custom hook for accessing current theme and switching themes                                                  |
+| **Switcher**           | Runtime logic that applies theme by setting CSS variables, classes, events, and localStorage                  |
+| **WCAG Validation**    | Automated contrast checks, focus ring validation, token completeness checks                                   |
+| **Deployment**         | Verdaccio registry, GitHub Actions CI/CD, CDN caching strategy                                                |
 
 ## Theme Catalogue
 
