@@ -4,50 +4,29 @@
  */
 
 export const DASHBOARD_CONFIG = {
-  // Header config
   header: {
     title: "CTMS Theme Hub",
     subtitle: "Live token orchestration for micro frontends",
     logoText: "CT",
   },
 
-  // Hero section config
   hero: {
     badge: "Design Operations",
     title: "Professional Runtime Theme Experience",
     description:
       "Ship new visual systems without redeploying every MFE. Users switch themes in real time, and token updates stay governed by accessibility gates, versioning, and rollback safety.",
+    availableThemesLabel: "Available Themes",
+    complianceLabel: "Compliance",
+    switchTimeLabel: "Switch Time",
+    catalogueLabel: "Catalogue",
   },
 
-  // Stats configuration
-  stats: [
-    {
-      label: "Active Theme",
-      value: "currentTheme", // Dynamic - will be replaced at runtime
-    },
-    {
-      label: "Available Themes",
-      value: "themeCount", // Dynamic
-    },
-    {
-      label: "Compliance",
-      value: "WCAG 2.2 AA",
-    },
-    {
-      label: "Switch Time",
-      value: "Instant",
-    },
-    {
-      label: "Layout",
-      value: "layout", // Dynamic
-    },
-    {
-      label: "Density",
-      value: "density", // Dynamic
-    },
-  ],
+  capabilityMatrix: {
+    title: "Capability Matrix",
+    description:
+      "Runtime switching, accessibility enforcement, and release safety.",
+  },
 
-  // Features/Capabilities configuration
   features: [
     {
       title: "Theme System",
@@ -85,7 +64,27 @@ export const DASHBOARD_CONFIG = {
     },
   ],
 
-  // Caching policy configuration
+  flow: {
+    pipeline: {
+      title: "Pipeline Flow",
+      items: [
+        "Token updates enter source control with semantic versioning.",
+        "CI validates WCAG rules across every published theme.",
+        "Verdaccio stores every version for instant rollback options.",
+        "CDN receives stable and versioned all-themes.js bundles.",
+      ],
+    },
+    runtime: {
+      title: "Runtime Flow",
+      items: [
+        "Host loads one bundle and populates selector dynamically.",
+        "Selection applies variables plus layout and density classes.",
+        "MFEs reflect changes instantly through CSS inheritance.",
+        "Preference persists locally and recovers on next page load.",
+      ],
+    },
+  },
+
   cachingPolicy: [
     {
       location: "CDN Stable URL",
@@ -104,7 +103,10 @@ export const DASHBOARD_CONFIG = {
     },
   ],
 
-  // Startup resolution order
+  caching: {
+    title: "Caching Policy",
+  },
+
   startupResolutionOrder: [
     "Read ctms:theme-preference and apply if present in the catalogue.",
     "If absent, resolve OS prefers-color-scheme and map to default dark or light.",
@@ -112,7 +114,15 @@ export const DASHBOARD_CONFIG = {
     "Render selector values from loaded catalogue data only.",
   ],
 
-  // QA checks configuration
+  startup: {
+    title: "Startup Resolution Order",
+    stableBundleLabel: "Stable Bundle",
+  },
+
+  mfeIntegration: {
+    title: "MFE Integration Contract",
+  },
+
   qaChecks: [
     "200% zoom with no clipped content and no horizontal scroll at 320px.",
     "Keyboard-only traversal with visible focus in each theme.",
@@ -120,7 +130,10 @@ export const DASHBOARD_CONFIG = {
     "Focus visibility on colored controls in every theme and density mode.",
   ],
 
-  // MFE integration contract
+  qaGate: {
+    title: "Pre-Stable QA Gate",
+  },
+
   mfeContract: [
     "Use CSS variables for color, spacing, and typography.",
     "Ship rules for both layout-sidebar and layout-top-nav.",
@@ -129,7 +142,6 @@ export const DASHBOARD_CONFIG = {
     "Listen to theme-changed for non-CSS renderers like canvas.",
   ],
 
-  // Footer config
   footer: {
     text: "Theme updates roll out from stable CDN URL with no website redeployment required.",
   },

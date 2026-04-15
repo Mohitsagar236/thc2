@@ -2,11 +2,7 @@ import { ThemeSelector } from "@/components/ThemeSelector";
 import { DASHBOARD_CONFIG } from "@/config/dashboard.config";
 
 export function DashboardHeader() {
-  const { headerTitle, headerSubtitle, logoText } = {
-    headerTitle: DASHBOARD_CONFIG.header.title,
-    headerSubtitle: DASHBOARD_CONFIG.header.subtitle,
-    logoText: DASHBOARD_CONFIG.header.logoText,
-  };
+  const { title, subtitle, logoText } = DASHBOARD_CONFIG.header;
 
   return (
     <header className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -18,11 +14,9 @@ export function DashboardHeader() {
           {logoText}
         </span>
         <div>
-          <p className="m-0 text-sm font-semibold tracking-wide">
-            {headerTitle}
-          </p>
+          <p className="m-0 text-sm font-semibold tracking-wide">{title}</p>
           <p className="m-0 mt-0.5 text-xs text-[var(--color-text-muted)]">
-            {headerSubtitle}
+            {subtitle}
           </p>
         </div>
       </div>

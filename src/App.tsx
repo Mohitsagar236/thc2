@@ -4,8 +4,8 @@ import { CapabilityMatrix } from "@/modules/dashboard/sections/CapabilityMatrix"
 import { FlowSection } from "@/modules/dashboard/sections/FlowSection";
 import { CachingAndStartupSection } from "@/modules/dashboard/sections/CachingAndStartupSection";
 import { MFEIntegrationSection } from "@/modules/dashboard/sections/MFEIntegrationSection";
-import { QAGateSection } from "@/modules/dashboard/sections/DashboardFooter";
-import { DashboardFooter } from "@/modules/dashboard/sections/Footer";
+import { QAGateSection } from "@/modules/dashboard/sections/QAGateSection";
+import { DashboardFooter } from "@/modules/dashboard/sections/DashboardFooter";
 
 /**
  * Main Application Component

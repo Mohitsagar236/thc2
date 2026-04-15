@@ -1,8 +1,8 @@
 {
-  "name": "thmc2",
-  "private": true,
+  "name": "@ctms/theme",
+  "private": false,
+  "version": "2.2.0",
   "type": "module",
-  "version": "0.0.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
