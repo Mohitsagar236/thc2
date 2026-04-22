@@ -1,19 +1,6 @@
 name: Theme Validation & Publishing
 
 on:
-  push:
-    branches: [main, develop]
-    paths:
-      - "src/theme/**"
-      - "scripts/**"
-      - "package.json"
-      - ".github/workflows/theme-publish.yml"
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - "src/theme/**"
-      - "scripts/**"
-      - "package.json"
   workflow_dispatch:
     inputs:
       operation:
