@@ -14,3 +14,5 @@ export default {
   },
   plugins: [],
 };
+
+// sync-trigger: 2026-04-22T12:27:49.5539451+05:30
