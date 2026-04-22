@@ -18,7 +18,7 @@
     "theme:upload": "node scripts/upload-theme-bundle.js",
     "theme:publish": "node scripts/publish-theme.js",
     "sync:setup": "node scripts/setup-cross-repo-sync.js",
-    "sync:mfes": "bash scripts/sync-theme-to-mfes.sh"
+    "sync:mfes": "node scripts/sync-theme-to-mfes.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

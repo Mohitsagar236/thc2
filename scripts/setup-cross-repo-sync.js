@@ -69,6 +69,13 @@ function getPackageVersion() {
 
 // Create GitHub Actions workflow for theme syncing
 function createSyncWorkflow() {
+  if (fs.existsSync(THEME_SYNC_SCRIPT)) {
+    console.log(
+      `ℹ️  ${THEME_SYNC_SCRIPT} already exists, keeping current workflow`,
+    );
+    return;
+  }
+
   const workflowDir = ".github/workflows";
   if (!fs.existsSync(workflowDir)) {
     fs.mkdirSync(workflowDir, { recursive: true });
@@ -302,284 +309,6 @@ echo "  3. Monitor micro frontend dashboards for any issues"
   console.log("✅ Created scripts/sync-theme-to-mfes.sh");
 }
 
-// Create MFE integration guide
-function createIntegrationGuide() {
-  const guidePath = "MFE_INTEGRATION_GUIDE.md";
-
-  const guide = `# Micro Frontend Theme Integration Guide
-
-## Overview
-
-This guide explains how to integrate the shared theme system (\`@ctms/theme\`) into your micro frontend repository.
-
-## Quick Start
-
-### Option 1: Git Submodule (Recommended for local development)
-
-\`\`\`bash
-# Navigate to your MFE repo
-cd your-mfe-repo
-
-# Add theme as Git submodule
-git submodule add https://github.com/Mohitsagar236/thmc2.git src/theme-shared
-
-# Update submodule
-git submodule update --init --recursive
-\`\`\`
-
-### Option 2: Copy Method (Automatic via CI/CD)
-
-The theme files are automatically synced to \`src/theme-shared/\` via GitHub Actions when changes are pushed to the main theme repo.
-
-## Integration Steps
-
-### 1. Update Your \`tailwind.config.js\`
-
-Replace or extend your Tailwind config with the shared theme:
-
-\`\`\`javascript
-// tailwind.config.js
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import sharedConfig from './src/theme-shared/tailwind.config.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export default {
-  ...sharedConfig,
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-    './src/theme-shared/**/*.{js,ts,jsx,tsx}',
-  ],
-};
-\`\`\`
-
-### 2. Wrap Your App with ThemeProvider
-
-\`\`\`tsx
-// src/main.tsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { ThemeProvider } from './theme-shared/provider';
-import App from './App';
-import './index.css';
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
-  </React.StrictMode>
-);
-\`\`\`
-
-### 3. Use Theme Hooks in Components
-
-\`\`\`tsx
-// src/components/MyComponent.tsx
-import { useTheme } from '../theme-shared/hooks';
-
-export function MyComponent() {
-  const { currentTheme, setTheme, availableThemes } = useTheme();
-
-  return (
-    <div className="p-4 bg-[var(--color-bg)] text-[var(--color-text)]">
-      <h1>Current Theme: {currentTheme}</h1>
-      
-      <select 
-        value={currentTheme} 
-        onChange={(e) => setTheme(e.target.value)}
-      >
-        {availableThemes.map(theme => (
-          <option key={theme.id} value={theme.id}>
-            {theme.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-\`\`\`
-
-### 4. Use Theme CSS Variables
-
-In your stylesheets:
-
-\`\`\`css
-/* src/styles/mycomponent.css */
-.my-card {
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border);
-}
-\`\`\`
-
-Or with Tailwind:
-
-\`\`\`tsx
-<div className="bg-[var(--color-surface)] text-[var(--color-text)] p-[var(--spacing-md)]">
-  Content
-</div>
-\`\`\`
-
-## Available Theme Tokens
-
-### Colors
-- \`--color-primary\` - Primary brand color
-- \`--color-secondary\` - Secondary color
-- \`--color-bg\` - Background color
-- \`--color-surface\` - Surface/card background
-- \`--color-text\` - Text color
-- \`--color-text-muted\` - Muted text
-- \`--color-error\` - Error/alert color
-- \`--color-success\` - Success color
-- \`--color-warning\` - Warning color
-- \`--color-info\` - Info color
-- \`--color-border\` - Border color
-- \`--color-focus\` - Focus ring color
-
-### Typography
-- \`--font-family-base\` - Base font family
-- \`--font-size-base\` - Base font size
-- \`--font-size-lg\` - Large font size
-- \`--font-size-sm\` - Small font size
-- \`--font-size-xl\` - Extra large font size
-- \`--font-weight-regular\` - Regular weight (400)
-- \`--font-weight-medium\` - Medium weight (500)
-- \`--font-weight-semibold\` - Semibold weight (600)
-- \`--line-height-base\` - Base line height
-
-### Spacing
-- \`--spacing-xs\` - Extra small (4px)
-- \`--spacing-sm\` - Small (8px)
-- \`--spacing-md\` - Medium (16px)
-- \`--spacing-lg\` - Large (24px)
-- \`--spacing-xl\` - Extra large (32px)
-
-### Layout
-- \`--sidebar-width\` - Sidebar width
-- \`--header-height\` - Header height
-- \`--container-max-width\` - Max container width
-
-## Keeping Theme Synced
-
-The theme is automatically synced via GitHub Actions when:
-- Changes are pushed to \`develop\` branch of the main theme repo
-- Theme files are modified (\`src/theme/**\`, \`tailwind.config.js\`)
-
-You'll receive a pull request with theme updates automatically.
-
-## Manual Sync
-
-If automatic sync is disabled, manually sync:
-
-\`\`\`bash
-# In the main theme repo (thmc2)
-npm run sync:mfes
-# or
-bash scripts/sync-theme-to-mfes.sh
-\`\`\`
-
-## Troubleshooting
-
-### Theme variables not loading
-- Check that ThemeProvider wraps your app root
-- Verify \`src/theme-shared\` folder exists
-- Check browser console for CSS variable errors
-
-### Submodule not updating
-\`\`\`bash
-git submodule update --remote --merge
-\`\`\`
-
-### Changes not syncing from main repo
-- Check GitHub Actions in main theme repo
-- Create an issue in the main repo
-- Manually sync using the sync script
-
-## Support
-
-For issues or questions:
-1. Check the main theme repo: https://github.com/Mohitsagar236/thmc2
-2. Create an issue with \`[MFE-Integration]\` prefix
-3. Contact the theme team
-
----
-
-**Last Updated:** $(date)
-**Theme Version:** See THEME_VERSION in src/theme-shared/version.ts
-`;
-
-  fs.writeFileSync(guidePath, guide);
-  console.log("✅ Created MFE_INTEGRATION_GUIDE.md");
-}
-
-// Create package.json update instructions
-function createPackageJsonUpdate() {
-  const updatePath = "PACKAGE_JSON_UPDATES.md";
-
-  const content = `# Package.json Configuration Updates
-
-## For Main Theme Package (thmc2)
-
-Add these scripts to your \`package.json\`:
-
-\`\`\`json
-{
-  "scripts": {
-    "sync:mfes": "bash scripts/sync-theme-to-mfes.sh",
-    "sync:setup": "node scripts/setup-cross-repo-sync.js",
-    "sync:add-mfe": "node scripts/setup-cross-repo-sync.js --add-mfe"
-  }
-}
-\`\`\`
-
-### Usage
-
-\`\`\`bash
-# Initial setup
-npm run sync:setup
-
-# Manually sync theme to all MFEs
-npm run sync:mfes
-
-# Add a new MFE
-npm run sync:add-mfe https://github.com/owner/new-mfe.git new-mfe-name
-\`\`\`
-
-## For Each Micro Frontend
-
-Update \`package.json\` to reference shared theme:
-
-\`\`\`json
-{
-  "devDependencies": {
-    "@ctms/theme": "workspace:*"
-  }
-}
-\`\`\`
-
-Or if using npm registry:
-
-\`\`\`json
-{
-  "devDependencies": {
-    "@ctms/theme": "^2.2.0"
-  }
-}
-\`\`\`
-
----
-
-**Last Updated:** $(date)
-`;
-
-  fs.writeFileSync(updatePath, content);
-  console.log("✅ Created PACKAGE_JSON_UPDATES.md");
-}
-
 // Main execution
 function main() {
   console.log("🎨 Setting up cross-repo theme sync...\n");
@@ -588,11 +317,9 @@ function main() {
     // Initialize config
     const config = initializeMFEConfig();
 
-    // Create workflows and scripts
+    // Create workflows and scripts only (no docs)
     createSyncWorkflow();
     createManualSyncScript();
-    createIntegrationGuide();
-    createPackageJsonUpdate();
 
     console.log("\n✅ Setup complete!\n");
     console.log("📋 Configuration Summary:");
@@ -606,8 +333,6 @@ function main() {
     console.log("   2. Push changes to develop branch");
     console.log("   3. GitHub Actions will automatically sync theme to MFEs");
     console.log("   4. Or manually run: npm run sync:mfes");
-
-    console.log("\n📖 For integration guide, see: MFE_INTEGRATION_GUIDE.md");
   } catch (error) {
     console.error("❌ Setup failed:", error.message);
     process.exit(1);
