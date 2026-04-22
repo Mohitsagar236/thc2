@@ -1,5 +1,43 @@
 # What's Left - Remaining Work for Production Launch
 
+## Suggested Taiga Split for 3 People
+
+Use this split to update Taiga quickly:
+
+| Person   | Owns                                                                                        |
+| -------- | ------------------------------------------------------------------------------------------- |
+| Person 1 | CI/CD pipeline, Verdaccio registry setup, CDN deployment, and production publish automation |
+| Person 2 | Unit tests, integration tests, E2E tests, and accessibility validation                      |
+| Person 3 | Monitoring/observability, documentation updates, rollout coordination, and launch support   |
+
+If you want a stricter split, keep each person responsible for one workstream below and move the checklist items into Taiga under that owner.
+
+## Taiga Workstreams
+
+### Person 1 - Delivery and Release
+
+1. Finalize the GitHub Actions workflow for lint, format, validation, bundle size, build, publish, tagging, and CDN upload.
+2. Configure and verify the package registry setup, including Verdaccio or the chosen npm registry.
+3. Prepare the CDN deployment path for stable and versioned bundles.
+4. Complete the first production publication flow and rollback path.
+5. Handle first-time deployment setup for registry, CDN, secrets, and workflow wiring.
+
+### Person 2 - Quality and Testing
+
+1. Add unit tests for WCAG validation utilities, versioning helpers, theme loading, and theme switching behavior.
+2. Add integration tests for the theme lifecycle, fallback behavior, and accessibility coverage.
+3. Add E2E tests for browser, device, zoom, keyboard, and slow-network scenarios.
+4. Verify theme accessibility across all supported themes and contrast requirements.
+5. Keep the test structure aligned with the planned `src/__tests__` and `e2e` folders.
+
+### Person 3 - Operations and Rollout
+
+1. Set up monitoring for CDN health, registry health, and bundle integrity.
+2. Create the operational runbooks for publish, rollback, alert response, and troubleshooting.
+3. Update documentation for integration guides, training materials, and README links.
+4. Coordinate rollout to the first micro frontend and support the staging and production checks.
+5. Track optional post-launch improvements such as the theme customizer, auto dark mode, analytics, and A/B testing.
+
 ## 1. CI/CD PIPELINE IMPLEMENTATION ⚠️
 
 **Status:** Documented but not deployed

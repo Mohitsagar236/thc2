@@ -28,7 +28,7 @@ export function ThemeSelector(): JSX.Element {
         id="theme-select"
         value={currentTheme}
         onChange={(e) => setTheme(e.target.value)}
-        className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text)] shadow-sm outline-none transition hover:border-[var(--color-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] md:min-w-[210px]"
+        className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text)] shadow-sm outline-none transition-colors duration-150 hover:border-[var(--color-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] md:min-w-[210px]"
         aria-label="Select application theme"
       >
         {themes.map((theme) => (

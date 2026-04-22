@@ -33,7 +33,7 @@ export function ThemedCard({
 
   return (
     <article
-      className="group flex min-h-[44px] flex-col gap-3 rounded-2xl border border-[var(--color-border)] border-t-4 bg-[var(--color-surface)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
+      className="group flex min-h-[44px] flex-col gap-3 rounded-2xl border border-[var(--color-border)] border-t-4 bg-[var(--color-surface)] p-4 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
       style={{ borderTopColor: statusColor }}
       role="article"
       tabIndex={0}

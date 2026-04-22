@@ -1,6 +1,5 @@
 {
   "name": "@ctms/theme",
-  "private": false,
   "version": "2.2.0",
   "type": "module",
   "scripts": {
@@ -17,7 +16,9 @@
     "theme:build-from-registry": "node scripts/build-theme-bundle-from-registry.js",
     "theme:check-size": "node scripts/check-bundle-size.js",
     "theme:upload": "node scripts/upload-theme-bundle.js",
-    "theme:publish": "node scripts/publish-theme.js"
+    "theme:publish": "node scripts/publish-theme.js",
+    "sync:setup": "node scripts/setup-cross-repo-sync.js",
+    "sync:mfes": "bash scripts/sync-theme-to-mfes.sh"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -51,6 +52,7 @@
     "postcss": "^8.5.1",
     "prettier": "^3.8.2",
     "tailwindcss": "^3.4.17",
+    "terser": "^5.46.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.1",
     "vite": "^6.1.0"

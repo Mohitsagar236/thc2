@@ -216,6 +216,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ctms/theme@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@ctms/theme@workspace:."
+  dependencies:
+    "@eslint/js": "npm:^9.18.0"
+    "@types/node": "npm:^22.13.1"
+    "@types/react": "npm:^19.0.8"
+    "@types/react-dom": "npm:^19.0.3"
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    autoprefixer: "npm:^10.4.20"
+    eslint: "npm:^9.39.4"
+    eslint-config-prettier: "npm:^10.1.8"
+    eslint-plugin-prettier: "npm:^5.5.5"
+    eslint-plugin-react: "npm:^7.37.5"
+    eslint-plugin-react-hooks: "npm:^5.2.0"
+    eslint-plugin-react-refresh: "npm:^0.4.18"
+    globals: "npm:^15.14.0"
+    husky: "npm:^9.1.7"
+    lint-staged: "npm:^15.4.3"
+    postcss: "npm:^8.5.1"
+    prettier: "npm:^3.8.2"
+    react: "npm:^19.1.0"
+    react-dom: "npm:^19.1.0"
+    tailwindcss: "npm:^3.4.17"
+    terser: "npm:^5.46.1"
+    typescript: "npm:^5.7.3"
+    typescript-eslint: "npm:^8.19.1"
+    vite: "npm:^6.1.0"
+  languageName: unknown
+  linkType: soft
+
 "@esbuild/aix-ppc64@npm:0.25.12":
   version: 0.25.12
   resolution: "@esbuild/aix-ppc64@npm:0.25.12"
@@ -560,6 +591,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jridgewell/source-map@npm:^0.3.3":
+  version: 0.3.11
+  resolution: "@jridgewell/source-map@npm:0.3.11"
+  dependencies:
+    "@jridgewell/gen-mapping": "npm:^0.3.5"
+    "@jridgewell/trace-mapping": "npm:^0.3.25"
+  checksum: 10c0/50a4fdafe0b8f655cb2877e59fe81320272eaa4ccdbe6b9b87f10614b2220399ae3e05c16137a59db1f189523b42c7f88bd097ee991dbd7bc0e01113c583e844
+  languageName: node
+  linkType: hard
+
 "@jridgewell/sourcemap-codec@npm:^1.4.14, @jridgewell/sourcemap-codec@npm:^1.5.0":
   version: 1.5.5
   resolution: "@jridgewell/sourcemap-codec@npm:1.5.5"
@@ -567,7 +608,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.28":
+"@jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28":
   version: 0.3.31
   resolution: "@jridgewell/trace-mapping@npm:0.3.31"
   dependencies:
@@ -1367,6 +1408,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"buffer-from@npm:^1.0.0":
+  version: 1.1.2
+  resolution: "buffer-from@npm:1.1.2"
+  checksum: 10c0/124fff9d66d691a86d3b062eff4663fe437a9d9ee4b47b1b9e97f5a5d14f6d5399345db80f796827be7c95e70a8e765dd404b7c3ff3b3324f98e9b0c8826cc34
+  languageName: node
+  linkType: hard
+
 "cacache@npm:^20.0.1":
   version: 20.0.4
   resolution: "cacache@npm:20.0.4"
@@ -1527,6 +1575,13 @@ __metadata:
   version: 13.1.0
   resolution: "commander@npm:13.1.0"
   checksum: 10c0/7b8c5544bba704fbe84b7cab2e043df8586d5c114a4c5b607f83ae5060708940ed0b5bd5838cf8ce27539cde265c1cbd59ce3c8c6b017ed3eec8943e3a415164
+  languageName: node
+  linkType: hard
+
+"commander@npm:^2.20.0":
+  version: 2.20.3
+  resolution: "commander@npm:2.20.3"
+  checksum: 10c0/74c781a5248c2402a0a3e966a0a2bba3c054aad144f5c023364be83265e796b20565aa9feff624132ff629aa64e16999fa40a743c10c12f7c61e96a794b99288
   languageName: node
   linkType: hard
 
@@ -4314,6 +4369,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"source-map-support@npm:~0.5.20":
+  version: 0.5.21
+  resolution: "source-map-support@npm:0.5.21"
+  dependencies:
+    buffer-from: "npm:^1.0.0"
+    source-map: "npm:^0.6.0"
+  checksum: 10c0/9ee09942f415e0f721d6daad3917ec1516af746a8120bba7bb56278707a37f1eb8642bde456e98454b8a885023af81a16e646869975f06afc1a711fb90484e7d
+  languageName: node
+  linkType: hard
+
+"source-map@npm:^0.6.0":
+  version: 0.6.1
+  resolution: "source-map@npm:0.6.1"
+  checksum: 10c0/ab55398007c5e5532957cb0beee2368529618ac0ab372d789806f5718123cc4367d57de3904b4e6a4170eb5a0b0f41373066d02ca0735a0c4d75c7d328d3e011
+  languageName: node
+  linkType: hard
+
 "ssri@npm:^13.0.0":
   version: 13.0.1
   resolution: "ssri@npm:13.0.1"
@@ -4532,6 +4604,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"terser@npm:^5.46.1":
+  version: 5.46.1
+  resolution: "terser@npm:5.46.1"
+  dependencies:
+    "@jridgewell/source-map": "npm:^0.3.3"
+    acorn: "npm:^8.15.0"
+    commander: "npm:^2.20.0"
+    source-map-support: "npm:~0.5.20"
+  bin:
+    terser: bin/terser
+  checksum: 10c0/45ba6566af976c518ff4e140250348d606761af822e23ea28d95b30fcf60fb69d3fabd93c6fafa4085d9fe31b67207e58b8480a64370b6cca07066c434101602
+  languageName: node
+  linkType: hard
+
 "thenify-all@npm:^1.0.0":
   version: 1.6.0
   resolution: "thenify-all@npm:1.6.0"
@@ -4549,36 +4635,6 @@ __metadata:
   checksum: 10c0/f375aeb2b05c100a456a30bc3ed07ef03a39cbdefe02e0403fb714b8c7e57eeaad1a2f5c4ecfb9ce554ce3db9c2b024eba144843cd9e344566d9fcee73b04767
   languageName: node
   linkType: hard
-
-"thmc2@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "thmc2@workspace:."
-  dependencies:
-    "@eslint/js": "npm:^9.18.0"
-    "@types/node": "npm:^22.13.1"
-    "@types/react": "npm:^19.0.8"
-    "@types/react-dom": "npm:^19.0.3"
-    "@vitejs/plugin-react": "npm:^4.3.4"
-    autoprefixer: "npm:^10.4.20"
-    eslint: "npm:^9.39.4"
-    eslint-config-prettier: "npm:^10.1.8"
-    eslint-plugin-prettier: "npm:^5.5.5"
-    eslint-plugin-react: "npm:^7.37.5"
-    eslint-plugin-react-hooks: "npm:^5.2.0"
-    eslint-plugin-react-refresh: "npm:^0.4.18"
-    globals: "npm:^15.14.0"
-    husky: "npm:^9.1.7"
-    lint-staged: "npm:^15.4.3"
-    postcss: "npm:^8.5.1"
-    prettier: "npm:^3.8.2"
-    react: "npm:^19.1.0"
-    react-dom: "npm:^19.1.0"
-    tailwindcss: "npm:^3.4.17"
-    typescript: "npm:^5.7.3"
-    typescript-eslint: "npm:^8.19.1"
-    vite: "npm:^6.1.0"
-  languageName: unknown
-  linkType: soft
 
 "tinyglobby@npm:^0.2.11, tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.13, tinyglobby@npm:^0.2.15":
   version: 0.2.16

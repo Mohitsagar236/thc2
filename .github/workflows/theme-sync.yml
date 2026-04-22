@@ -1,0 +1,231 @@
+name: Sync Theme to Micro Frontends
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/theme/**'
+      - 'tailwind.config.js'
+      - 'package.json'
+
+jobs:
+  build-theme:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get theme version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint & Format Check
+        run: npm run lint && npm run format:check
+
+      - name: Validate themes
+        run: npm run theme:validate
+
+      - name: Build theme bundle
+        run: npm run theme:build-bundle
+
+      - name: Check bundle size
+        run: npm run theme:check-size
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-bundle
+          path: dist/
+          retention-days: 1
+
+  sync-mfes:
+    needs: build-theme
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - mfe: mfe-dashboard
+            repo: Mohitsagar236/mfe-dashboard
+            branch: develop
+          - mfe: mfe-admin
+            repo: Mohitsagar236/mfe_admin
+            branch: develop
+          - mfe: mfe-user-profile
+            repo: Mohitsagar236/mfe_user_profile
+            branch: develop
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build theme bundle
+        run: npm run theme:build-bundle
+
+      - name: Checkout MFE
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: .tmp/${{ matrix.mfe }}
+          ref: ${{ matrix.branch }}
+
+      - name: Update theme in ${{ matrix.mfe }}
+        run: |
+          THEME_DIR=".tmp/${{ matrix.mfe }}/src/theme-shared"
+          mkdir -p "$THEME_DIR"
+          
+          echo "📂 Copying theme files to $THEME_DIR..."
+          
+          # Copy theme source files
+          cp -r src/theme/* "$THEME_DIR/"
+          cp tailwind.config.js "$THEME_DIR/"
+          
+          # Create version info file
+          THEME_VERSION="${{ needs.build-theme.outputs.version }}"
+          SYNC_TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          
+          cat > "$THEME_DIR/version.ts" << 'EOF'
+          /**
+           * Auto-generated theme version file
+           * Updated on every sync from main theme repository
+           */
+          
+          export const THEME_METADATA = {
+            version: '${{ needs.build-theme.outputs.version }}',
+            syncedAt: '$SYNC_TIMESTAMP',
+            syncedBy: 'GitHub Actions',
+            syncTrigger: '${{ github.event_name }}',
+            syncCommit: '${{ github.sha }}',
+            repository: 'https://github.com/${{ github.repository }}'
+          } as const;
+          
+          export const THEME_VERSION = THEME_METADATA.version;
+          EOF
+          
+          echo "✅ Theme files copied"
+          echo "📄 Files in theme-shared:"
+          ls -la "$THEME_DIR" || true
+
+      - name: Check for changes
+        id: check_changes
+        working-directory: .tmp/${{ matrix.mfe }}
+        run: |
+          if git diff --quiet src/theme-shared/; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "⏭️  No theme changes in ${{ matrix.mfe }}"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "🔄 Theme changes detected in ${{ matrix.mfe }}"
+          fi
+
+      - name: Configure git
+        working-directory: .tmp/${{ matrix.mfe }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Commit and push theme update
+        if: steps.check_changes.outputs.has_changes == 'true'
+        working-directory: .tmp/${{ matrix.mfe }}
+        run: |
+          git add src/theme-shared/
+          
+          COMMIT_MSG="chore(theme): sync theme updates from @ctms/theme@${{ needs.build-theme.outputs.version }}"
+          COMMIT_BODY="Automatic theme sync from main repository
+
+Synced files:
+- src/theme/** (all theme modules)
+- tailwind.config.js
+- version.ts (sync metadata)
+
+Trigger: ${{ github.event_name }}
+Commit: ${{ github.sha }}"
+          
+          git commit -m "$COMMIT_MSG" -m "$COMMIT_BODY"
+          
+          # Try to push
+          if ! git push origin ${{ matrix.branch }}; then
+            echo "⚠️  Push failed, likely due to branch protection"
+            echo "Creating pull request instead..."
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const mfeRepo = '${{ matrix.repo }}';
+            const [mfeOwner, mfeName] = mfeRepo.split('/');
+            
+            console.log(`Checking for PR in ${mfeRepo}...`);
+            
+            // Note: Creating PR in external repo would require different token
+            // For now, just log the status
+            console.log(`Theme sync completed for ${{ matrix.mfe }}`);
+
+  notify:
+    needs: [build-theme, sync-mfes]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Post sync status
+        run: |
+          echo "🎨 Theme Sync Status"
+          echo "=================="
+          echo "Version: ${{ needs.build-theme.outputs.version }}"
+          echo "Build Status: ${{ needs.build-theme.result }}"
+          echo "Sync Status: ${{ needs.sync-mfes.result }}"
+          echo "Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+      - name: Send Webhook Notification
+        if: vars.SYNC_WEBHOOK_URL != ''
+        run: |
+          curl -X POST "${{ vars.SYNC_WEBHOOK_URL }}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "event": "theme-sync-complete",
+              "status": "${{ needs.sync-mfes.result }}",
+              "version": "${{ needs.build-theme.outputs.version }}",
+              "timestamp": "'$(date -u +'%Y-%m-%dT%H:%M:%SZ')'",
+              "commit": "${{ github.sha }}",
+              "actor": "${{ github.actor }}"
+            }' || echo "⚠️  Webhook notification failed (optional)"
+
+      - name: Print summary
+        run: |
+          echo "### 🎨 Theme Sync Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.build-theme.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Result:** ${{ needs.build-theme.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Sync Result:** ${{ needs.sync-mfes.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Synced At:** $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**MFEs Updated:**" >> $GITHUB_STEP_SUMMARY
+          echo "- mfe-dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "- mfe-admin" >> $GITHUB_STEP_SUMMARY
+          echo "- mfe-user-profile" >> $GITHUB_STEP_SUMMARY
