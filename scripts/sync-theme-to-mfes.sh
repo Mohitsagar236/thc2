@@ -7,6 +7,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MFE_CONFIG="$PROJECT_ROOT/.mfe-config.json"
 TEMP_DIR="$PROJECT_ROOT/.tmp-theme-sync"
+GIT_TOKEN="${MFE_SYNC_TOKEN:-}"
+
+function auth_url() {
+  local url="$1"
+  if [ -n "$GIT_TOKEN" ]; then
+    printf '%s' "${url/https:\/\/github.com\//https://x-access-token:$GIT_TOKEN@github.com/}"
+  else
+    printf '%s' "$url"
+  fi
+}
 
 if [ ! -f "$MFE_CONFIG" ]; then
   echo "❌ Error: $MFE_CONFIG not found"
@@ -62,7 +72,8 @@ for line in "${MFE_LINES[@]}"; do
     cd "$PROJECT_ROOT"
   else
     echo "  ⏳ Cloning $MFE_NAME..."
-    git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$MFE_DIR"
+    AUTH_REPO_URL="$(auth_url "$REPO_URL")"
+    git clone --depth 1 --branch "$BRANCH" "$AUTH_REPO_URL" "$MFE_DIR"
   fi
 
   THEME_DEST="$MFE_DIR/src/theme-shared"

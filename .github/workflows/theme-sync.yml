@@ -56,18 +56,6 @@ jobs:
   sync-mfes:
     needs: build-theme
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - mfe: mfe-dashboard
-            repo: Mohitsagar236/mfe-dashboard
-            branch: develop
-          - mfe: mfe-admin
-            repo: Mohitsagar236/mfe_admin
-            branch: develop
-          - mfe: mfe-user-profile
-            repo: Mohitsagar236/mfe_user_profile
-            branch: develop
 
     steps:
       - uses: actions/checkout@v4
@@ -78,121 +66,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: yarn
-          cache-dependency-path: yarn.lock
 
-      - name: Checkout MFE
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ matrix.repo }}
-          token: ${{ secrets.MFE_SYNC_TOKEN }}
-          path: .tmp/${{ matrix.mfe }}
-          ref: ${{ matrix.branch }}
+      - name: Enable Corepack
+        run: corepack enable
 
-      - name: Update theme in ${{ matrix.mfe }}
-        run: |
-          THEME_DIR=".tmp/${{ matrix.mfe }}/src/theme-shared"
-          mkdir -p "$THEME_DIR"
-          
-          echo "📂 Copying theme files to $THEME_DIR..."
-          
-          # Copy theme source files
-          cp -r src/theme/* "$THEME_DIR/"
-          cp tailwind.config.js "$THEME_DIR/"
-          
-          # Create version info file
-          THEME_VERSION="${{ needs.build-theme.outputs.version }}"
-          SYNC_TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          
-          cat > "$THEME_DIR/version.ts" << EOF
-          /**
-           * Auto-generated theme version file
-           * Updated on every sync from main theme repository
-           */
-          
-          export const THEME_METADATA = {
-            version: '${{ needs.build-theme.outputs.version }}',
-            syncedAt: '$SYNC_TIMESTAMP',
-            syncedBy: 'GitHub Actions',
-            syncTrigger: '${{ github.event_name }}',
-            syncCommit: '${{ github.sha }}',
-            repository: 'https://github.com/${{ github.repository }}'
-          } as const;
-          
-          export const THEME_VERSION = THEME_METADATA.version;
-          EOF
-          
-          echo "✅ Theme files copied"
-          echo "📄 Files in theme-shared:"
-          ls -la "$THEME_DIR" || true
+      - name: Install dependencies
+        run: yarn install --immutable
 
-      - name: Check for changes
-        id: check_changes
-        working-directory: .tmp/${{ matrix.mfe }}
-        run: |
-          if [ -z "$(git status --porcelain src/theme-shared/)" ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "⏭️  No theme changes in ${{ matrix.mfe }}"
-          else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "🔄 Theme changes detected in ${{ matrix.mfe }}"
-          fi
-
-      - name: Configure git
-        working-directory: .tmp/${{ matrix.mfe }}
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-      - name: Commit and push theme update
-        id: push_theme
-        if: steps.check_changes.outputs.has_changes == 'true'
-        working-directory: .tmp/${{ matrix.mfe }}
-        run: |
-          git add src/theme-shared/
-          
-          COMMIT_MSG="chore(theme): sync theme updates from @ctms/theme@${{ needs.build-theme.outputs.version }}"
-          COMMIT_BODY="Automatic theme sync from main repository
-
-Synced files:
-- src/theme/** (all theme modules)
-- tailwind.config.js
-- version.ts (sync metadata)
-
-Trigger: ${{ github.event_name }}
-Commit: ${{ github.sha }}"
-          
-          git commit -m "$COMMIT_MSG" -m "$COMMIT_BODY"
-          
-          # Try direct push first
-          if git push origin "HEAD:${{ matrix.branch }}"; then
-            echo "push_mode=direct" >> $GITHUB_OUTPUT
-          else
-            SYNC_BRANCH="theme-sync/${{ github.run_id }}-${{ matrix.mfe }}"
-            git push origin "HEAD:$SYNC_BRANCH"
-            echo "push_mode=pr" >> $GITHUB_OUTPUT
-            echo "sync_branch=$SYNC_BRANCH" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Pull Request
-        if: "steps.check_changes.outputs.has_changes == 'true' && steps.push_theme.outputs.push_mode == 'pr'"
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.MFE_SYNC_TOKEN }}
-          script: |
-            const mfeRepo = '${{ matrix.repo }}';
-            const [mfeOwner, mfeName] = mfeRepo.split('/');
-            const headBranch = '${{ steps.push_theme.outputs.sync_branch }}';
-            const baseBranch = '${{ matrix.branch }}';
-            
-            await github.rest.pulls.create({
-              owner: mfeOwner,
-              repo: mfeName,
-              title: `chore(theme): sync updates from @ctms/theme@${{ needs.build-theme.outputs.version }}`,
-              head: headBranch,
-              base: baseBranch,
-              body: `Automated sync from ${context.repo.owner}/${context.repo.repo}\n\nSource commit: ${context.sha}`,
-            });
+      - name: Run cross-repo theme sync
+        env:
+          MFE_SYNC_TOKEN: ${{ secrets.MFE_SYNC_TOKEN }}
+        run: yarn sync:mfes
 
   notify:
     needs: [build-theme, sync-mfes]
