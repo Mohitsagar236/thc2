@@ -78,6 +78,7 @@ export interface ThemeContextType {
   themes: ThemeDefinition[];
   catalogueVersion: string;
   catalogueSource: "global" | "cdn" | "local-cache" | "embedded";
+  isReady: boolean;
   setTheme: (themeName: string) => void;
   applyTheme: (themeName: string) => void;
   getThemeByName: (name: string) => ThemeDefinition | undefined;

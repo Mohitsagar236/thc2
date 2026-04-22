@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 // Lazy load all dashboard sections for code splitting
 const DashboardHeader = lazy(() =>
@@ -42,44 +43,45 @@ const DashboardFooter = lazy(() =>
   })),
 );
 
+const sectionList = [
+  { id: "dashboard-header", Component: DashboardHeader },
+  { id: "hero", Component: HeroSection },
+  { id: "capabilities", Component: CapabilityMatrix },
+  { id: "flow", Component: FlowSection },
+  { id: "caching-startup", Component: CachingAndStartupSection },
+  { id: "mfe-integration", Component: MFEIntegrationSection },
+  { id: "qa-gate", Component: QAGateSection },
+  { id: "dashboard-footer", Component: DashboardFooter },
+];
+
 // Loading fallback component
 function SectionPlaceholder() {
-  return <div className="h-32 animate-pulse bg-gray-200" />;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="h-32 animate-pulse rounded-3xl bg-slate-200 shadow-sm"
+    />
+  );
 }
 
 /**
  * Main Application Component
- * Renders the theme system dashboard with modular section components
- * Uses lazy loading for code splitting and performance optimization
+ * Renders a professional dashboard shell with graceful loading and error handling.
  */
 function App() {
   return (
     <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <section className="mx-auto w-full max-w-6xl px-4 py-5 md:px-6 md:py-8">
-        <Suspense fallback={<SectionPlaceholder />}>
-          <DashboardHeader />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <HeroSection />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <CapabilityMatrix />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <FlowSection />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <CachingAndStartupSection />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <MFEIntegrationSection />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <QAGateSection />
-        </Suspense>
-        <Suspense fallback={<SectionPlaceholder />}>
-          <DashboardFooter />
-        </Suspense>
+        <AppErrorBoundary>
+          <div className="space-y-8">
+            {sectionList.map(({ id, Component }) => (
+              <Suspense key={id} fallback={<SectionPlaceholder />}>
+                <Component />
+              </Suspense>
+            ))}
+          </div>
+        </AppErrorBoundary>
       </section>
     </main>
   );

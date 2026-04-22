@@ -35,7 +35,7 @@ env:
   THEME_PACKAGE_NAME: ${{ vars.THEME_PACKAGE_NAME || '@ctms/theme' }}
   CDN_UPLOAD_URL: ${{ secrets.CDN_UPLOAD_URL }}
   CDN_UPLOAD_KEY: ${{ secrets.CDN_UPLOAD_KEY }}
-  NODE_VERSION: "18"
+  NODE_VERSION: "20"
 
 jobs:
   validate:
@@ -52,17 +52,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Run accessibility checks
-        run: npm run theme:validate
+        run: yarn theme:validate
         continue-on-error: false
 
       - name: Build theme bundle
-        run: npm run theme:build-bundle
+        run: yarn theme:build-bundle
 
       - name: Upload validation report
         if: always()
@@ -72,7 +73,7 @@ jobs:
           path: dist/theme/validation-report.json
 
       - name: Check bundle size
-        run: npm run theme:check-size
+        run: yarn theme:check-size
         continue-on-error: false
 
   lint:
@@ -88,16 +89,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Run ESLint
-        run: npm run lint
+        run: yarn lint
 
       - name: Run Prettier
-        run: npm run format:check
+        run: yarn format:check
 
   build:
     name: Build Theme Bundle
@@ -112,16 +114,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Build application
-        run: npm run build
+        run: yarn build
 
       - name: Build theme bundle
-        run: npm run theme:build-bundle
+        run: yarn theme:build-bundle
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
@@ -143,39 +146,40 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Configure npm registry
         run: |
-          npm config set registry "${REGISTRY_URL}"
+          yarn npm config set registry "${REGISTRY_URL}"
           REGISTRY_HOST="${REGISTRY_URL#http://}"
           REGISTRY_HOST="${REGISTRY_HOST#https://}"
-          npm config set "//${REGISTRY_HOST}/:_authToken" "${VERDACCIO_TOKEN}"
+          yarn npm config set "//${REGISTRY_HOST}/:_authToken" "${VERDACCIO_TOKEN}"
         env:
           REGISTRY_URL: ${{ env.REGISTRY_URL }}
           VERDACCIO_TOKEN: ${{ env.VERDACCIO_TOKEN }}
 
       - name: Publish to Verdaccio
-        run: npm publish
+        run: yarn npm publish
         continue-on-error: false
 
       - name: Tag published version as stable
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          npm dist-tag add ${THEME_PACKAGE_NAME}@${VERSION} stable
+          yarn npm dist-tag add ${THEME_PACKAGE_NAME}@${VERSION} stable
 
       - name: Generate bundle from published package
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          npm run theme:build-from-registry -- --package "${THEME_PACKAGE_NAME}" --version "${VERSION}" --registry "${REGISTRY_URL}"
+          yarn theme:build-from-registry -- --package "${THEME_PACKAGE_NAME}" --version "${VERSION}" --registry "${REGISTRY_URL}"
 
       - name: Upload to CDN
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          npm run theme:upload -- --version "${VERSION}"
+          yarn theme:upload -- --version "${VERSION}"
         env:
           CDN_UPLOAD_URL: ${{ env.CDN_UPLOAD_URL }}
           CDN_UPLOAD_KEY: ${{ env.CDN_UPLOAD_KEY }}
@@ -184,7 +188,7 @@ jobs:
         if: success()
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "## ✓ Theme Bundle Published" >> $GITHUB_STEP_SUMMARY
+          echo "## Theme Bundle Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
           echo "- **Registry**: Verdaccio" >> $GITHUB_STEP_SUMMARY
@@ -203,14 +207,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Configure npm registry
         run: |
-          npm config set registry "${REGISTRY_URL}"
+          yarn npm config set registry "${REGISTRY_URL}"
           REGISTRY_HOST="${REGISTRY_URL#http://}"
           REGISTRY_HOST="${REGISTRY_HOST#https://}"
-          npm config set "//${REGISTRY_HOST}/:_authToken" "${VERDACCIO_TOKEN}"
+          yarn npm config set "//${REGISTRY_HOST}/:_authToken" "${VERDACCIO_TOKEN}"
         env:
           REGISTRY_URL: ${{ env.REGISTRY_URL }}
           VERDACCIO_TOKEN: ${{ env.VERDACCIO_TOKEN }}
@@ -221,21 +226,21 @@ jobs:
             echo "rollbackVersion input is required for rollback operation"
             exit 1
           fi
-          npm dist-tag add ${THEME_PACKAGE_NAME}@${{ inputs.rollbackVersion }} stable
+          yarn npm dist-tag add ${THEME_PACKAGE_NAME}@${{ inputs.rollbackVersion }} stable
         continue-on-error: false
 
       - name: Rebuild rollback bundle from published package
         run: |
-          npm ci
-          npm run theme:build-from-registry -- --package "${THEME_PACKAGE_NAME}" --version "${{ inputs.rollbackVersion }}" --registry "${REGISTRY_URL}"
+          yarn install --immutable
+          yarn theme:build-from-registry -- --package "${THEME_PACKAGE_NAME}" --version "${{ inputs.rollbackVersion }}" --registry "${REGISTRY_URL}"
 
       - name: Upload rollback bundle to CDN
         run: |
-          npm run theme:upload -- --version "${{ inputs.rollbackVersion }}"
+          yarn theme:upload -- --version "${{ inputs.rollbackVersion }}"
         env:
           CDN_UPLOAD_URL: ${{ env.CDN_UPLOAD_URL }}
           CDN_UPLOAD_KEY: ${{ env.CDN_UPLOAD_KEY }}
 
       - name: Notification
         run: |
-          echo "⚠️ Manual rollback completed. Stable now points to v${{ inputs.rollbackVersion }}"
+          echo "Manual rollback completed. Stable now points to v${{ inputs.rollbackVersion }}"

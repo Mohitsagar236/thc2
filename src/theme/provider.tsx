@@ -36,6 +36,7 @@ export function ThemeProvider({
   );
   const [catalogueSource, setCatalogueSource] =
     useState<ThemeCatalogueSource>("embedded");
+  const [isReady, setIsReady] = useState<boolean>(false);
 
   // Initialize theme on mount
   useEffect(() => {
@@ -43,32 +44,40 @@ export function ThemeProvider({
     const unregisterLogoutCleanup = registerThemeLogoutCleanup();
 
     async function initializeThemeSystem(): Promise<void> {
-      const loaded = await loadThemeCatalogue(themeCatalogue);
-      if (!mounted) {
-        return;
-      }
+      try {
+        const loaded = await loadThemeCatalogue(themeCatalogue);
+        if (!mounted) {
+          return;
+        }
 
-      setThemes(loaded.catalogue.themes);
-      setCatalogueVersion(loaded.catalogue.version);
-      setCatalogueSource(loaded.source);
+        setThemes(loaded.catalogue.themes);
+        setCatalogueVersion(loaded.catalogue.version);
+        setCatalogueSource(loaded.source);
 
-      // Cache the latest bundle for CDN fallback
-      cacheThemeBundle(loaded.catalogue);
+        // Cache the latest bundle for CDN fallback
+        cacheThemeBundle(loaded.catalogue);
 
-      const initialTheme = resolveInitialTheme(
-        loaded.catalogue.themes,
-        loaded.catalogue.defaults.light,
-        loaded.catalogue.defaults.dark,
-      );
+        const initialTheme = resolveInitialTheme(
+          loaded.catalogue.themes,
+          loaded.catalogue.defaults.light,
+          loaded.catalogue.defaults.dark,
+        );
 
-      setCurrentTheme(initialTheme);
+        setCurrentTheme(initialTheme);
 
-      const themeToApply = loaded.catalogue.themes.find(
-        (theme) => theme.themeName === initialTheme,
-      );
+        const themeToApply = loaded.catalogue.themes.find(
+          (theme) => theme.themeName === initialTheme,
+        );
 
-      if (themeToApply) {
-        applyTheme(themeToApply);
+        if (themeToApply) {
+          applyTheme(themeToApply);
+        }
+      } catch (error) {
+        console.error("Theme initialization failed", error);
+      } finally {
+        if (mounted) {
+          setIsReady(true);
+        }
       }
     }
 
@@ -103,10 +112,32 @@ export function ThemeProvider({
     themes,
     catalogueVersion,
     catalogueSource,
+    isReady,
     setTheme: handleSetTheme,
     applyTheme: handleSetTheme,
     getThemeByName,
   };
+
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-16 sm:px-6">
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-lg shadow-slate-200/60">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Initializing theme system
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold text-slate-900">
+              Preparing a stable experience...
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+              Loading the theme catalogue and applying design tokens before the
+              interface renders.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

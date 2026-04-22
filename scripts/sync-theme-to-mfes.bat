@@ -22,7 +22,7 @@ REM Check if .mfe-config.json exists
 if not exist "%MFE_CONFIG%" (
     echo ❌ Error: .mfe-config.json not found
     echo.
-    echo Please run: npm run sync:setup
+    echo Please run: yarn sync:setup
     echo.
     exit /b 1
 )
@@ -39,7 +39,7 @@ REM Build theme bundle
 echo.
 echo 📦 Building theme bundle...
 cd /d "%PROJECT_ROOT%"
-call npm run theme:build-bundle
+call yarn theme:build-bundle
 if errorlevel 1 (
     echo ❌ Theme build failed
     exit /b 1
@@ -54,12 +54,16 @@ echo.
 echo 🔄 Syncing theme to micro frontends...
 echo.
 
-REM Note: For Windows batch, we need to iterate through MFEs
-REM This is a simplified version - for production, use PowerShell or Node.js
+set "MFE_LIST=%TEMP_DIR%\mfe-list.txt"
+if exist "%MFE_LIST%" del /q "%MFE_LIST%"
 
-call :syncMFE "mfe-dashboard" "https://github.com/Mohitsagar236/mfe-dashboard.git" "develop"
-call :syncMFE "mfe-admin" "https://github.com/Mohitsagar236/mfe_admin.git" "develop"
-call :syncMFE "mfe-user-profile" "https://github.com/Mohitsagar236/mfe_user_profile.git" "develop"
+node -e "const cfg = require('./.mfe-config.json'); cfg.mfes.filter(m => m.enabled).forEach(m => console.log(m.name + '|' + m.url + '|' + (m.branch || 'develop')));" > "%MFE_LIST%"
+
+for /f "usebackq delims=" %%A in ("%MFE_LIST%") do (
+    for /f "tokens=1,2,3 delims=|" %%B in ("%%A") do (
+        call :syncMFE "%%B" "%%C" "%%D"
+    )
+)
 
 REM Cleanup
 echo.
