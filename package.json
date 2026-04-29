@@ -3,7 +3,8 @@
   "version": "2.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/build-theme-bundle.js && vite --port 5000",
+    "start:all": "START_ALL_MFE_SERVERS.bat",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -17,8 +18,7 @@
     "theme:check-size": "node scripts/check-bundle-size.js",
     "theme:upload": "node scripts/upload-theme-bundle.js",
     "theme:publish": "node scripts/publish-theme.js",
-    "sync:setup": "node scripts/setup-cross-repo-sync.js",
-    "sync:mfes": "node scripts/sync-theme-to-mfes.js"
+    "sync:mfes": "node scripts/sync-theme-to-mfes-core.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -31,10 +31,12 @@
   },
   "dependencies": {
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^6.14.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@originjs/vite-plugin-federation": "^1.4.1",
     "@types/node": "^22.13.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",

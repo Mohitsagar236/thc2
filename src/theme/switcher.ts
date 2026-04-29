@@ -5,6 +5,13 @@
  */
 
 import { ThemeDefinition, ColorScheme, ThemeCatalogue } from "./types";
+import {
+  dispatchAppearanceSync,
+  getCurrentDensityVariant,
+  getCurrentLayoutVariant,
+  type DensityVariant,
+  type LayoutVariant,
+} from "./mfe-sync";
 
 const THEME_PREFERENCE_KEY = "ctms:theme-preference";
 const TOKEN_CACHE_KEY = "ctms:token-cache";
@@ -49,8 +56,13 @@ function isDarkTheme(theme: ThemeDefinition): boolean {
 /**
  * Apply layout and density classes to body
  */
-function applyLayoutAndDensity(theme: ThemeDefinition): void {
+function applyLayoutAndDensity(theme: ThemeDefinition): {
+  layout: LayoutVariant;
+  density: DensityVariant;
+} {
   const body = document.body;
+  const nextLayout = getCurrentLayoutVariant(theme.layout);
+  const nextDensity = getCurrentDensityVariant(theme.density);
 
   // Remove all layout classes
   Array.from(body.classList)
@@ -63,31 +75,31 @@ function applyLayoutAndDensity(theme: ThemeDefinition): void {
     .forEach((cls) => body.classList.remove(cls));
 
   // Apply new layout class
-  if (theme.layout) {
-    body.classList.add(theme.layout);
-  }
+  body.classList.add(nextLayout);
 
   // Apply new density class
-  if (theme.density) {
-    body.classList.add(theme.density);
-  }
+  body.classList.add(nextDensity);
+
+  return {
+    layout: nextLayout,
+    density: nextDensity,
+  };
 }
 
 /**
  * Dispatch custom event for MFEs that need programmatic reaction
  */
-function dispatchThemeChangeEvent(theme: ThemeDefinition): void {
-  const event = new CustomEvent("theme-changed", {
-    detail: {
-      themeName: theme.themeName,
-      layout: theme.layout,
-      density: theme.density,
-    },
-    bubbles: true,
-    composed: true,
-    cancelable: false,
+function dispatchThemeChangeEvent(
+  theme: ThemeDefinition,
+  layout: LayoutVariant,
+  density: DensityVariant,
+): void {
+  dispatchAppearanceSync({
+    themeName: theme.themeName,
+    layout,
+    density,
+    source: "host-theme-switch",
   });
-  window.dispatchEvent(event);
 }
 
 /**
@@ -103,7 +115,7 @@ export function applyTheme(theme: ThemeDefinition): void {
   root.style.colorScheme = root.dataset.theme;
 
   // Apply layout and density classes
-  applyLayoutAndDensity(theme);
+  const appliedVariants = applyLayoutAndDensity(theme);
 
   // Save preference to localStorage
   try {
@@ -113,7 +125,11 @@ export function applyTheme(theme: ThemeDefinition): void {
   }
 
   // Dispatch event for MFEs
-  dispatchThemeChangeEvent(theme);
+  dispatchThemeChangeEvent(
+    theme,
+    appliedVariants.layout,
+    appliedVariants.density,
+  );
 }
 
 /**

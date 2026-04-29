@@ -13,6 +13,13 @@ export type {
   ColorScheme,
 } from "./types";
 
+export type {
+  AppearanceSyncDetail,
+  AppearanceSyncSource,
+  LayoutVariant,
+  DensityVariant,
+} from "./mfe-sync";
+
 // Provider
 export { ThemeProvider } from "./provider";
 
@@ -35,6 +42,14 @@ export {
   registerThemeLogoutCleanup,
   THEME_STORAGE_KEYS,
 } from "./switcher";
+
+export {
+  THEME_SYNC_EVENT_NAME,
+  getCurrentLayoutVariant,
+  getCurrentDensityVariant,
+  dispatchAppearanceSync,
+  subscribeToAppearanceSync,
+} from "./mfe-sync";
 
 // Theme bundle loader
 export { loadThemeCatalogue, getThemeBundleUrl } from "./loader";

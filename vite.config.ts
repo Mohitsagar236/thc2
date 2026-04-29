@@ -1,59 +1,77 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import federation from "@originjs/vite-plugin-federation";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Custom middleware for handling remote entry files
+ * Allows fallback from /assets/remoteEntry.js to /remoteEntry.js
+ */
+function remoteEntryMiddleware() {
+  return {
+    name: "remote-entry-middleware",
+    apply: "serve",
+    configResolved() {
+      // Plugin initialization
+    },
+    transformIndexHtml: {
+      order: "pre" as const,
+      handler(html: string) {
+        // Add script to help with remote loading diagnostics
+        const diagnosticScript = `
+          <script>
+            window.__REMOTE_LOADING_START__ = Date.now();
+            console.log('[Host] Initializing remote module federation...');
+          </script>
+        `;
+        return html.replace("<head>", `<head>${diagnosticScript}`);
+      },
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 3000,
-  },
+  plugins: [
+    react(),
+    remoteEntryMiddleware(),
+    federation({
+      name: "host",
+      remotes: {
+        dashboard: "http://localhost:5001/assets/remoteEntry.js",
+        admin: "http://localhost:5002/assets/remoteEntry.js",
+        user: "http://localhost:5003/assets/remoteEntry.js",
+      },
+      shared: {
+        react: { singleton: true, requiredVersion: "^19.1.0" },
+        "react-dom": { singleton: true, requiredVersion: "^19.1.0" },
+      } as Record<string, unknown>,
+    }),
+  ],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
-      "@features": resolve(__dirname, "./src/features"),
-      "@shared": resolve(__dirname, "./src/shared"),
-      "@pages": resolve(__dirname, "./src/pages"),
-      "@utils": resolve(__dirname, "./src/utils"),
-      "@hooks": resolve(__dirname, "./src/hooks"),
-      "@assets": resolve(__dirname, "./src/assets"),
+    },
+  },
+  publicDir: "public",
+  server: {
+    port: 5000,
+    middlewareMode: false,
+    cors: true,
+    headers: {
+      // Ensure remoteEntry.js is not cached
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
     },
   },
   build: {
-    target: "ES2020",
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          "vendor-react": ["react", "react-dom"],
-          "theme-system": [
-            "./src/theme/index.ts",
-            "./src/theme/provider.tsx",
-            "./src/theme/context.ts",
-          ],
-          "dashboard-sections": [
-            "./src/modules/dashboard/sections/DashboardHeader",
-            "./src/modules/dashboard/sections/HeroSection",
-            "./src/modules/dashboard/sections/CapabilityMatrix",
-            "./src/modules/dashboard/sections/FlowSection",
-            "./src/modules/dashboard/sections/CachingAndStartupSection",
-            "./src/modules/dashboard/sections/MFEIntegrationSection",
-            "./src/modules/dashboard/sections/QAGateSection",
-            "./src/modules/dashboard/sections/DashboardFooter",
-          ],
-        },
-      },
-    },
+    target: "esnext",
+    minify: false,
+    cssCodeSplit: false,
     chunkSizeWarningLimit: 1000,
-    cssCodeSplit: true,
     reportCompressedSize: false,
   },
 });

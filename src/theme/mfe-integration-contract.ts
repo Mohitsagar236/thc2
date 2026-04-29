@@ -36,7 +36,7 @@
  *
  * 5. Optionally Listen for theme-changed Event
  *    - Dispatch location: window (bubbles: true, composed: true)
- *    - Event type: CustomEvent<{ themeName: string; layout?: string; density?: string }>
+ *    - Event type: CustomEvent<{ themeName: string; layout: string; density: string; source: string; emittedAt: string }>
  *    - Use case: re-render canvas/SVG that doesn't respond to CSS changes
  *    - Example: canvas-based charting libraries
  */
@@ -171,7 +171,13 @@ export const HOST_OBLIGATIONS = {
   "4. Dispatch theme-changed event": `
     ✓ CORRECT:
       const event = new CustomEvent("theme-changed", {
-        detail: { themeName: theme.themeName },
+        detail: {
+          themeName: theme.themeName,
+          layout: activeLayout,
+          density: activeDensity,
+          source: "host-theme-switch",
+          emittedAt: new Date().toISOString()
+        },
         bubbles: true,
         composed: true
       });
