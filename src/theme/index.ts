@@ -98,14 +98,3 @@ export {
   validateBundleSize,
   getDistTag,
 } from "./versioning";
-
-export type { ThemeVersion, ReleaseProcess } from "./versioning";
-
-// MFE Integration Contract & Guidelines
-export { MFE_CONTRACT } from "./mfe-integration-contract";
-
-// Layout Variants Documentation
-export { LAYOUT_VARIANTS_GUIDE } from "./layout-variants";
-
-// Deployment & Configuration Guide
-export { DEPLOYMENT_GUIDE } from "./deployment-guide";

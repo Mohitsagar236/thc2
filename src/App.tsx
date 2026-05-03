@@ -78,21 +78,12 @@ function createRemoteApp(
 
 const DashboardApp = createRemoteApp(
   "dashboard",
-  // @ts-expect-error: federated remote modules are resolved at runtime by Vite Module Federation
   () => import("dashboard/App"),
 );
 
-const AdminApp = createRemoteApp(
-  "admin",
-  // @ts-expect-error: federated remote modules are resolved at runtime by Vite Module Federation
-  () => import("admin/App"),
-);
+const AdminApp = createRemoteApp("admin", () => import("admin/App"));
 
-const UserApp = createRemoteApp(
-  "user",
-  // @ts-expect-error: federated remote modules are resolved at runtime by Vite Module Federation
-  () => import("user/App"),
-);
+const UserApp = createRemoteApp("user", () => import("user/App"));
 
 const navItems = [
   { to: "/", label: "Dashboard" },
